@@ -1,8 +1,7 @@
 package org.monarchinitiative.oncembobulator.io;
 
 import org.apache.commons.cli.*;
-import org.monarchinitiative.oncembobulator.command.Command;
-import org.monarchinitiative.oncembobulator.command.DownloadOnkoKB;
+import org.monarchinitiative.oncembobulator.command.*;
 
 
 import java.io.OutputStream;
@@ -43,6 +42,12 @@ public class Commandline {
         }
         if (mycommand.equals("download-oncokb")) {
             this.command = new DownloadOnkoKB();
+        } else if (mycommand.equals("download-clinvar")) {
+            this.command = new DownloadClinvar();
+        } else if (mycommand.equals("jannovar")) {
+            this.command = new CreateJannovarTranscriptFile();
+        } else if (mycommand.equals("undiscombobulate")) {
+            this.command = new Undiscombobulate();
         } else {
             System.out.println("Did not recognize command: "+ mycommand);
             printUsage();
@@ -92,7 +97,8 @@ public class Commandline {
         writer.print("\t where command is one of download-oncokb, download-clinvar, parse.\n");
         writer.print("\t download-oncokb: Download the OnkoKB data to the data directory.\n");
         writer.print("\t download-clinvar: Download the ClinVar data to the data directory.\n");
-        writer.print("\t parse: parse and discombobulate the mutations.\n");
+        writer.print("\t jannovar: Download hg38 transcript data and create Jannovar transcript file.\n");
+        writer.print("\t undiscombobulate: map the the mutations.\n");
         writer.close();
         System.exit(0);
     }

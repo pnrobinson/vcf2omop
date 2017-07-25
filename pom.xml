@@ -120,7 +120,7 @@
                             <classpathPrefix>lib/</classpathPrefix>
 
                             <useUniqueVersions>false</useUniqueVersions>
-                            <mainClass>org.monarchinitiative.onembobulator.Oncembobulator</mainClass>
+                            <mainClass>org.monarchinitiative.oncembobulator.Oncembobulator</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
