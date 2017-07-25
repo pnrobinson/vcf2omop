@@ -10,13 +10,14 @@ import java.util.List;
 
 public class OncoKBParser {
     static Logger logger = Logger.getLogger(OncoKBParser.class.getName());
-    private List<OncoKBVariant> variants;
+    private List<OncoKBVariant> variants=null;
 
     public OncoKBParser(String path){
         variants=new ArrayList<>();
         parse(path);
-
     }
+
+    public List<OncoKBVariant> getOncoKBVariants() { return this.variants; }
 
     /**
      * Parse the OncoKB file. A typical line looks like this
@@ -29,6 +30,7 @@ public class OncoKBParser {
 
         try{
             BufferedReader br = new BufferedReader(new FileReader(path));
+            String header=br.readLine(); /* skip the header line */
             String line=null;
             while ((line=br.readLine())!=null) {
                 //System.out.println(line);
