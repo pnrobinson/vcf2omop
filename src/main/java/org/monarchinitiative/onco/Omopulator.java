@@ -42,9 +42,9 @@ public class Omopulator {
         }
         String command = jc.getParsedCommand();
         if (command == null) {
-            System.err.println("[ERROR] no command passed");
-            System.err.println(jc.toString());
-            System.exit(1);
+            System.err.println("\n[ERROR] no command passed");
+            System.err.println("[ERROR] run java -jar omopulator.jar -h for help.\n");
+            return;
         }
         Command myCommand = null;
         switch (command) {
