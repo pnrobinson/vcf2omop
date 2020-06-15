@@ -1,6 +1,9 @@
-package org.monarchinitiative.oncembobulator.data;
+package org.monarchinitiative.onco.data;
 
-import org.apache.log4j.Logger;
+
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -9,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OncoKBParser {
-    static Logger logger = Logger.getLogger(OncoKBParser.class.getName());
+    static Logger logger = LoggerFactory.getLogger(OncoKBParser.class);
     private List<OncoKBVariant> variants=null;
 
     public OncoKBParser(String path){
@@ -47,7 +50,7 @@ public class OncoKBParser {
             br.close();
         }catch (IOException e){
             logger.error("Could not parse "+path);
-            logger.error(e,e);
+            logger.error(e.getMessage());
         }
         logger.info("Parsed a total of "+ variants.size()+" variants from "+path);
     }

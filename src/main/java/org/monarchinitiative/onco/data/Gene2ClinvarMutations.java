@@ -1,17 +1,18 @@
-package org.monarchinitiative.oncembobulator.data;
+package org.monarchinitiative.onco.data;
 
 import de.charite.compbio.jannovar.hgvs.AminoAcidCode;
 import de.charite.compbio.jannovar.hgvs.protein.change.ProteinChange;
-import de.charite.compbio.jannovar.reference.GenomeVariant;
 
 import de.charite.compbio.jannovar.annotation.Annotation;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Gene2ClinvarMutations {
-    static Logger logger = Logger.getLogger(Gene2ClinvarMutations.class.getName());
+    static Logger logger = LoggerFactory.getLogger(Gene2ClinvarMutations.class);
     private String genesymbol=null;
 
     private List<Annotation> annots;

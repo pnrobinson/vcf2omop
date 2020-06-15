@@ -1,42 +1,33 @@
-package org.monarchinitiative.oncembobulator.data;
+package org.monarchinitiative.onco.data;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import de.charite.compbio.jannovar.Jannovar;
 import de.charite.compbio.jannovar.JannovarException;
 import de.charite.compbio.jannovar.annotation.Annotation;
 import de.charite.compbio.jannovar.annotation.VariantAnnotations;
-import de.charite.compbio.jannovar.annotation.VariantAnnotator;
-import de.charite.compbio.jannovar.annotation.builders.AnnotationBuilderOptions;
 import de.charite.compbio.jannovar.cmd.HelpRequestedException;
 import de.charite.compbio.jannovar.cmd.annotate_vcf.JannovarAnnotateVCFOptions;
 import de.charite.compbio.jannovar.data.Chromosome;
 import de.charite.compbio.jannovar.data.JannovarData;
 import de.charite.compbio.jannovar.data.JannovarDataSerializer;
 import de.charite.compbio.jannovar.data.ReferenceDictionary;
-import de.charite.compbio.jannovar.filter.facade.ThresholdFilterOptions;
 import de.charite.compbio.jannovar.htsjdk.VariantContextAnnotator;
-import de.charite.compbio.jannovar.htsjdk.VariantEffectHeaderExtender;
-import de.charite.compbio.jannovar.impl.intervals.Interval;
 import de.charite.compbio.jannovar.progress.GenomeRegionListFactoryFromSAMSequenceDictionary;
 import de.charite.compbio.jannovar.progress.ProgressReporter;
-import de.charite.compbio.jannovar.reference.GenomeVariant;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.variant.variantcontext.VariantContext;
-import htsjdk.variant.vcf.VCFContigHeaderLine;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
-import htsjdk.variant.vcf.VCFHeaderLine;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class ClinvarParser {
-    static Logger logger = Logger.getLogger(ClinvarParser.class.getName());
+    static Logger logger = LoggerFactory.getLogger(ClinvarParser.class);
 
     private static final String jannovarfile="data/hg38_refseq.ser";
 
@@ -86,8 +77,9 @@ public class ClinvarParser {
         this.chromosomeMap = this.jannovarData.getChromosomes();
         final boolean isUtrOffTarget = false;
         final boolean isIntronicSpliceOffTarget = false;
-        VariantContextAnnotator.Options opts = new VariantContextAnnotator.Options(false, false, false, false, isUtrOffTarget,
-                isIntronicSpliceOffTarget);
+        VariantContextAnnotator.Options opts = new VariantContextAnnotator.Options();
+                //(false, false, false, false, isUtrOffTarget,
+              //  isIntronicSpliceOffTarget);
         this.annotator = new VariantContextAnnotator(refDict,chromosomeMap,opts);
     }
 
@@ -112,7 +104,7 @@ public class ClinvarParser {
             deserializeTranscriptDefinitionFile(jannovarfile);
         } catch (JannovarException e) {
             logger.error("Could not deserialize Jannovar data");
-            logger.error(e,e);
+            logger.error(e.getMessage());
             logger.error("Cannot recover, exiting.");
             System.exit(1);
         }

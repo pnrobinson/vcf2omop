@@ -1,4 +1,4 @@
-package org.monarchinitiative.oncembobulator.io;
+package org.monarchinitiative.onco.io;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -28,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:manuel.holtgrewe@charite.de">Manuel Holtgrewe</a>
  */
 public class FileDownloader {
-    static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(FileDownloader.class.getName());
+    static Logger logger = LoggerFactory.getLogger(FileDownloader.class);
 
     public static class ProxyOptions {
         public String host = null;

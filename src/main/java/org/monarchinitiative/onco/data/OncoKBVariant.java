@@ -1,13 +1,15 @@
-package org.monarchinitiative.oncembobulator.data;
+package org.monarchinitiative.onco.data;
 
-import javafx.beans.property.IntegerProperty;
-import org.apache.log4j.Logger;
+
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OncoKBVariant {
-    static Logger logger = Logger.getLogger(OncoKBVariant.class.getName());
+    static Logger logger = LoggerFactory.getLogger(OncoKBVariant.class);
     private String genesymbol=null;
     private String mutation=null;
     private String cancer=null;

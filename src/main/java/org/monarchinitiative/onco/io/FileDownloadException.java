@@ -1,4 +1,4 @@
-package org.monarchinitiative.oncembobulator.io;
+package org.monarchinitiative.onco.io;
 
 public class FileDownloadException extends Exception {
     private static final long serialVersionUID = 1L;

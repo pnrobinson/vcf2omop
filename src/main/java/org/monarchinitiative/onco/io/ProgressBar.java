@@ -1,4 +1,4 @@
-package org.monarchinitiative.oncembobulator.io;
+package org.monarchinitiative.onco.io;
 
 
 /**

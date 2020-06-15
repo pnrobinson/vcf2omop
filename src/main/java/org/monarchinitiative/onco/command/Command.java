@@ -1,4 +1,4 @@
-package org.monarchinitiative.oncembobulator.command;
+package org.monarchinitiative.onco.command;
 
 public abstract class Command {
 
