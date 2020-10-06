@@ -43,3 +43,13 @@ java -jar target/omopulator.jar -v src/main/resources/sample.vcf -j <path/to/hg3
 ```
 
 Replace `<path/to/hg38_refseq_curated.ser>` with the correct path on your system.
+
+
+This is the output
+```
+[INFO] VCF: /home/peter/IdeaProjects/omopulator/src/main/resources/sample.vcf
+17:31357058C>G [ALLELEID=138629]
+12:76346442CT>C [ALLELEID=358111]
+X:71223934T>G [ALLELEID=625537]
+[INFO] VCF had a total of 72 variants and and 0 low-quality variants filtered out.
+```

@@ -139,7 +139,7 @@ public class Ompopulate {
                 }
             }
         }
-        System.out.printf("[INFO] Got %d variants and filtered out %d.\n", n_good_quality_variants, n_filtered_variants);
+        System.out.printf("[INFO] VCF had a total of %d variants and and %d low-quality variants filtered out.\n", n_good_quality_variants, n_filtered_variants);
     }
 
 
