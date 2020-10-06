@@ -17,8 +17,10 @@ public class OmopulateCommand extends Command {
     static Logger logger = LoggerFactory.getLogger(OmopulateCommand.class);
     @Parameter(names={"-v","--vcf"}, description ="path to VCF file", required = true)
     private String vcfPath;
+    @Parameter(names={"-j", "--jannovar"}, description = "path to Jannovar transcript file")
+    private String jannovarPath;
 
-    private String jannovarPath = "data/hg19_ucsc.ser";
+    //private String jannovarPath = "data/hg19_ucsc.ser";
 
     /** All variants from the OncoKB file.*/
     private List<OncoKBVariant> variants;

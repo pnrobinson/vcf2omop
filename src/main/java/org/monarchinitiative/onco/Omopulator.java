@@ -33,7 +33,7 @@ public class Omopulator {
         try {
             jc.parse(args);
         } catch (ParameterException pe) {
-            System.err.printf("[ERROR] Could not start chc2go: %s\n", pe.getMessage());
+            System.err.printf("[ERROR] Could not start omopulator.jar: %s\n", pe.getMessage());
             System.exit(1);
         }
         if (oncembobulator.usageHelpRequested) {

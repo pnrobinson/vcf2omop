@@ -21,7 +21,7 @@ public class CreateJannovarTranscriptFile extends Command {
 
     public void execute() {
         logger.debug("Executing CreateJannovarTranscriptFile");
-        String args[]={"download","-d", "hg19/ucsc", "-s", iniAbsPath, "--download-dir", downloadDir};
+        String args[]={"download","-d", "hg38/ensembl", "-s", iniAbsPath, "--download-dir", downloadDir};
         Jannovar.main(args);
 
     }

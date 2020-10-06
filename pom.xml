@@ -9,7 +9,7 @@
     <packaging>jar</packaging>
 
     <name>oncembobulator</name>
-    <url>http://maven.apache.org</url>
+    <url>https://github.com/pnrobinson/omopulator</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -20,7 +20,7 @@
         <junit.version>5.6.1</junit.version>
         <junit.jupiter.version>5.7.0-M1</junit.jupiter.version>
         <junit.platform.version>1.7.0-M1</junit.platform.version>
-        <jannovar.version>0.34</jannovar.version>
+        <jannovar.version>0.35</jannovar.version>
     </properties>
 
     <dependencies>
@@ -133,14 +133,14 @@
             <resource>
                 <directory>src/main/resources/</directory>
             </resource>
-            <resource>
+           <!-- <resource>
                 <directory>src/main/java</directory>
                 <includes>
                     <include>**/*.fxml</include>
                     <include>**/*.css</include>
                     <include>**/*.properties</include>
                 </includes>
-            </resource>
+            </resource> -->
         </resources>
         <finalName>omopulator</finalName>
 

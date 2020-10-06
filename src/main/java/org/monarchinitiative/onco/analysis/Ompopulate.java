@@ -10,6 +10,8 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import org.monarchinitiative.onco.data.CivicParser;
+import org.monarchinitiative.onco.data.OmopEntry;
+import org.monarchinitiative.onco.data.OmopMapParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,8 @@ public class Ompopulate {
      */
     private int n_filtered_variants = 0;
 
+    List<OmopEntry> entries;
+
     /**
      * Number of samples in the VCF file.
      */
@@ -64,6 +68,9 @@ public class Ompopulate {
 
 
     public Ompopulate(String jannovarPath, String vcfPath) {
+        OmopMapParser parser = new OmopMapParser();
+        this.entries = parser.getEntries();
+
         try {
             this.jannovarData = new JannovarDataSerializer(jannovarPath).load();
         } catch (SerializationException se) {
@@ -76,32 +83,16 @@ public class Ompopulate {
         this.referenceDictionary = jannovarData.getRefDict();
         this.chromosomeMap = jannovarData.getChromosomes();
         this.vcfFilePath = f.getAbsolutePath();
-        parseCivic();
         parseVcf();
     }
 
-
-    private void parseCivic() {
-        CivicParser parser = new CivicParser(civicLocalPath);
-        List<CivicVariant> vars = parser.getVarlist();
-        this.pos2civis = new HashMap<>();
-        int c = 0;
-        for (CivicVariant var : vars) {
-            ChrPosition pos = new ChrPosition(var.getChromosome(), var.getStart(), var.getEnd());
-            pos2civis.putIfAbsent(pos, new ArrayList<>());
-            List<CivicVariant> vvlist = pos2civis.get(pos);
-            vvlist.add(var);
-            c++;
-        }
-        System.out.printf("[INFO] Got %d CIVIC variants.\n", c);
-    }
 
 
     private void parseVcf() {
         // whether or not to just look at a specific genomic interval
         final boolean useInterval = false;
         final long startTime = System.nanoTime();
-
+        System.out.println("[INFO] VCF: " + this.vcfFilePath);
         try (VCFFileReader vcfReader = new VCFFileReader(new File(this.vcfFilePath), useInterval)) {
             //final SAMSequenceDictionary seqDict = VCFFileReader.getSequenceDictionary(new File(getOptionalVcfPath));
             VCFHeader vcfHeader = vcfReader.getFileHeader();
@@ -138,18 +129,10 @@ public class Ompopulate {
                     // Map<String, SampleGenotype> sampleGenotypes = createAlleleSampleGenotypes(vc, i);
                     int end = start + alt.length() - 1;
                     ChrPosition pos = new ChrPosition(contig, start, end);
-                    if (this.pos2civis.containsKey(pos)) {
-                        List<CivicVariant> vlist = this.pos2civis.get(pos);
-                        for (CivicVariant cvar : vlist) {
-                            if (ref.equals(cvar.getReferences_bases()) && alt.equals(cvar.getVariant_bases())) {
-                                System.out.println("[EXACT MATCH}:");
-                                System.out.println("\t" + cvar);
-                            } else {
-                                System.out.println("[OVERLAPPING}:");
-                                System.out.println("\t" + cvar);
-                            }
+                    for (OmopEntry entry : this.entries) {
+                        if (entry.isEqual(contig, start, ref, alt)) {
+                            System.out.println(entry);
                         }
-                        System.out.println(this.pos2civis.get(pos));
                     }
 
 
