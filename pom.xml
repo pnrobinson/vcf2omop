@@ -114,11 +114,11 @@
             <version>3.6</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/commons-cli/commons-cli -->
+        <!-- https://mvnrepository.com/artifact/info.picocli/picocli -->
         <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
-            <version>1.78</version>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>4.5.1</version>
         </dependency>
 
     </dependencies>

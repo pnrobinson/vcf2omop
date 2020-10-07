@@ -1,72 +1,45 @@
 package org.monarchinitiative.onco;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 
-import org.monarchinitiative.onco.command.Command;
-import org.monarchinitiative.onco.command.CreateJannovarTranscriptFile;
+
+import de.charite.compbio.jannovar.JannovarException;
 import org.monarchinitiative.onco.command.DownloadCommand;
+import org.monarchinitiative.onco.command.JannovarDownloadCommand;
 import org.monarchinitiative.onco.command.OmopulateCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
+import java.util.concurrent.Callable;
 
-public class Omopulator {
+@CommandLine.Command(name = "omopulator", mixinStandardHelpOptions = true, version = "0.2.5",
+        description = "Extract omop-encoded variants")
+public class Omopulator implements Callable<Integer>  {
     static Logger logger = LoggerFactory.getLogger(Omopulator.class);
-    @Parameter(names = {"-h", "--help"}, help = true, description = "display this help message")
-    private boolean usageHelpRequested;
+
 
 
     public static void main(String args[]) {
 
-        Omopulator oncembobulator = new Omopulator();
-        Command jannovar = new CreateJannovarTranscriptFile();
-        Command ompopulate = new OmopulateCommand();
-        Command download = new DownloadCommand();
-        JCommander jc = JCommander.newBuilder()
-                .addObject(oncembobulator)
-                .addCommand("jannovar", jannovar)
-                .addCommand("download", download)
-                .addCommand("omopulate", ompopulate)
-                .build();
-        try {
-            jc.parse(args);
-        } catch (ParameterException pe) {
-            System.err.printf("[ERROR] Could not start omopulator.jar: %s\n", pe.getMessage());
-            System.exit(1);
-        }
-        if (oncembobulator.usageHelpRequested) {
-            jc.usage();
-            System.exit(0);
-        }
-        String command = jc.getParsedCommand();
-        if (command == null) {
-            System.err.println("\n[ERROR] no command passed");
-            System.err.println("[ERROR] run java -jar omopulator.jar -h for help.\n");
-            return;
-        }
-        Command myCommand = null;
-        switch (command) {
-            case "download":
-                myCommand= download;
-                break;
-            case "jannovar":
-                myCommand= jannovar;
-                break;
-            case "omopulate":
-                myCommand= ompopulate;
-                break;
-            default:
-                System.err.println("[ERROR] Did not recognize command: "+ command);
-                jc.usage();
-                System.exit(0);
-        }
-        myCommand.execute();
+        CommandLine cline = new CommandLine(new Omopulator()).
+                addSubcommand("download", new DownloadCommand()).
+                addSubcommand("omopulate", new OmopulateCommand()).
+                addSubcommand("jannovar", new JannovarDownloadCommand());
+        cline.setToggleBooleanFlags(false);
+        int exitCode = cline.execute(args);
+        System.exit(exitCode);
+
+
+
+
     }
 
     public Omopulator() {
     }
-
+    @Override
+    public Integer call() throws Exception {
+        // work done in subcommands
+        return 0;
+    }
 
 }

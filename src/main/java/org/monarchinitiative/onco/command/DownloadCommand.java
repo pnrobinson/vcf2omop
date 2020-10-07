@@ -1,14 +1,16 @@
 package org.monarchinitiative.onco.command;
 
-import com.beust.jcommander.Parameters;
+
 import org.monarchinitiative.onco.io.FileDownloadException;
 import org.monarchinitiative.onco.io.FileDownloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.Callable;
 
 import static org.monarchinitiative.onco.analysis.FilePaths.*;
 
@@ -19,8 +21,8 @@ import static org.monarchinitiative.onco.analysis.FilePaths.*;
  * {@code Homo_sapiencs_gene_info.gz}, and {@code mim2gene_medgen}.
  * @author <a href="mailto:peter.robinson@jax.org">Peter Robinson</a>
  */
-@Parameters(commandDescription = "Download files")
-public class DownloadCommand extends Command {
+@CommandLine.Command(name = "download",  mixinStandardHelpOptions = true, description = "Download files")
+public class DownloadCommand implements Callable<Integer> {
     static Logger logger = LoggerFactory.getLogger(DownloadCommand.class);
 
     private static final String oncokbURL="http://oncokb.org/api/v1/utils/allActionableVariants.txt";
@@ -32,12 +34,13 @@ public class DownloadCommand extends Command {
     private static final String clinvarURL="ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz";
 
 
-    public void execute(){
+    @Override
+    public Integer call() throws Exception {
         logger.debug("Executing DownloadOnkoKB");
         download(oncokbURL, oncokbLocalPath);
         download(civicURL, civicLocalPath);
         download(clinvarURL, clinvarLocalPath);
-
+        return 0;
     }
 
 

@@ -1,26 +1,25 @@
 package org.monarchinitiative.onco.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
+
 import org.monarchinitiative.onco.analysis.Ompopulate;
 import org.monarchinitiative.onco.data.Gene2ClinvarMutations;
 import org.monarchinitiative.onco.data.OncoKBVariant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
-@Parameters(commandDescription = "annotate a VCF")
-public class OmopulateCommand extends Command {
+@CommandLine.Command(name = "omopulate",  mixinStandardHelpOptions = true, description = "omopulate")
+public class OmopulateCommand implements Callable<Integer>  {
     static Logger logger = LoggerFactory.getLogger(OmopulateCommand.class);
-    @Parameter(names={"-v","--vcf"}, description ="path to VCF file", required = true)
+    @CommandLine.Option(names = {"--vcf"}, description ="path to VCF file", required = true)
     private String vcfPath;
-    @Parameter(names={"-j", "--jannovar"}, description = "path to Jannovar transcript file")
+    @CommandLine.Option(names = {"-j", "--jannovar"}, description = "path to Jannovar transcript file")
     private String jannovarPath;
-
-    //private String jannovarPath = "data/hg19_ucsc.ser";
 
     /** All variants from the OncoKB file.*/
     private List<OncoKBVariant> variants;
@@ -29,12 +28,11 @@ public class OmopulateCommand extends Command {
 
     private Map<String,Gene2ClinvarMutations> gene2mutMap=null;
 
-    public void execute(){
+    @Override
+    public Integer call() throws Exception {
         logger.debug("Executing Ompopulate");
         Ompopulate ompopulate = new Ompopulate(jannovarPath, vcfPath);
+        return 0;
     }
-
-
-
 
 }
