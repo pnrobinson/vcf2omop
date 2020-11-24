@@ -25,7 +25,7 @@ public class JannovarDownloadCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         logger.debug("Executing CreateJannovarTranscriptFile");
-        String args[]={"download","-d", "hg38/ensembl", "-s", iniAbsPath, "--download-dir", downloadDir};
+        String[] args ={"download","-d", "hg38/ensembl", "-s", iniAbsPath, "--download-dir", downloadDir};
         Jannovar.main(args);
         return 0;
     }

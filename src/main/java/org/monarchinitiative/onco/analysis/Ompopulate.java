@@ -1,6 +1,8 @@
 package org.monarchinitiative.onco.analysis;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import de.charite.compbio.jannovar.annotation.VariantEffect;
 import de.charite.compbio.jannovar.data.*;
 import de.charite.compbio.jannovar.htsjdk.VariantContextAnnotator;
 import de.charite.compbio.jannovar.progress.ProgressReporter;
@@ -9,19 +11,21 @@ import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
-import org.monarchinitiative.onco.data.CivicParser;
+import org.monarchinitiative.exomiser.core.model.ChromosomalRegionIndex;
+import org.monarchinitiative.exomiser.core.model.RegulatoryFeature;
+import org.monarchinitiative.exomiser.core.model.TranscriptAnnotation;
+import org.monarchinitiative.exomiser.core.model.VariantAnnotation;
 import org.monarchinitiative.onco.data.OmopEntry;
 import org.monarchinitiative.onco.data.OmopMapParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.monarchinitiative.exomiser.core.genome.GenomeAssembly;
+import org.monarchinitiative.exomiser.core.genome.JannovarVariantAnnotator;
 
-import static org.monarchinitiative.onco.analysis.FilePaths.civicLocalPath;
+import java.io.File;
+import java.util.List;
+
 
 public class Ompopulate {
     private final static Logger logger = LoggerFactory.getLogger(Ompopulate.class);
@@ -50,7 +54,7 @@ public class Ompopulate {
      */
     private int n_filtered_variants = 0;
 
-    List<OmopEntry> entries;
+    final List<OmopEntry> entries;
 
     /**
      * Number of samples in the VCF file.
@@ -64,18 +68,21 @@ public class Ompopulate {
      * List of all names in the VCF file
      */
     private List<String> samplenames;
-    private Map<ChrPosition, List<CivicVariant>> pos2civis;
 
+    /** Must be one of GRCh19 or GRCh38. */
+    private final String genomeAssembly;
 
-    public Ompopulate(String jannovarPath, String vcfPath) {
-        OmopMapParser parser = new OmopMapParser();
+    public Ompopulate(String jannovarPath, String vcfPath, String assembly) {
+        this.genomeAssembly = assembly;
+        OmopMapParser parser = new OmopMapParser(genomeAssembly);
         this.entries = parser.getEntries();
-
         try {
             this.jannovarData = new JannovarDataSerializer(jannovarPath).load();
         } catch (SerializationException se) {
             throw new RuntimeException(se.getMessage());
         }
+        System.out.printf("[INFO] We ingested %d transcripts from %s.\n",
+                this.jannovarData.getTmByAccession().size(), jannovarPath);
         File f = new File(vcfPath);
         if (!f.exists()) {
             throw new RuntimeException("Could not find VCF file at " + vcfPath);
@@ -88,11 +95,16 @@ public class Ompopulate {
 
 
 
+    private final String [] header = {"OMOP.id", "assembly", "chromosome", "position", "reference", "alternate", "gene", "gene.id", "variant.effect",
+                        "hgvs.genomic", "hgvs.cdna", "hgvs.protein"};
+
+
     private void parseVcf() {
         // whether or not to just look at a specific genomic interval
         final boolean useInterval = false;
         final long startTime = System.nanoTime();
         System.out.println("[INFO] VCF: " + this.vcfFilePath);
+        System.out.println(String.join("\t", header));
         try (VCFFileReader vcfReader = new VCFFileReader(new File(this.vcfFilePath), useInterval)) {
             //final SAMSequenceDictionary seqDict = VCFFileReader.getSequenceDictionary(new File(getOptionalVcfPath));
             VCFHeader vcfHeader = vcfReader.getFileHeader();
@@ -104,11 +116,10 @@ public class Ompopulate {
             VariantContextAnnotator variantEffectAnnotator =
                     new VariantContextAnnotator(this.referenceDictionary, this.chromosomeMap,
                             new VariantContextAnnotator.Options());
-            // Note that we do not use Genomiser data in this version of LIRICAL
-            // Therefore, just pass in an empty list to satisfy the API
-            // List<RegulatoryFeature> emtpylist = ImmutableList.of();
-            //  ChromosomalRegionIndex<RegulatoryFeature> emptyRegionIndex = ChromosomalRegionIndex.of(emtpylist);
-            //  JannovarVariantAnnotator jannovarVariantAnnotator = new JannovarVariantAnnotator(genomeAssembly, jannovarData, emptyRegionIndex);
+            GenomeAssembly genomeAssembly = GenomeAssembly.HG38;
+            List<RegulatoryFeature> emtpylist = ImmutableList.of();
+            ChromosomalRegionIndex<RegulatoryFeature> emptyRegionIndex = ChromosomalRegionIndex.of(emtpylist);
+            JannovarVariantAnnotator jannovarVariantAnnotator = new JannovarVariantAnnotator(genomeAssembly, jannovarData, emptyRegionIndex);
             while (iter.hasNext()) {
                 VariantContext vc = iter.next();
                 if (vc.isFiltered()) {
@@ -119,19 +130,35 @@ public class Ompopulate {
                     n_good_quality_variants++;
                 }
                 vc = variantEffectAnnotator.annotateVariantContext(vc);
+                //variantEffectAnnotator.
                 List<Allele> altAlleles = vc.getAlternateAlleles();
                 String contig = vc.getContig();
                 int start = vc.getStart();
                 String ref = vc.getReference().getBaseString();
-                for (int i = 0; i < altAlleles.size(); i++) {
-                    Allele allele = altAlleles.get(i);
+                for (Allele allele : altAlleles) {
                     String alt = allele.getBaseString();
-                    // Map<String, SampleGenotype> sampleGenotypes = createAlleleSampleGenotypes(vc, i);
+                    VariantAnnotation va = jannovarVariantAnnotator.annotate(contig, start, ref, alt);
+                    VariantEffect variantEffect = va.getVariantEffect();
                     int end = start + alt.length() - 1;
                     ChrPosition pos = new ChrPosition(contig, start, end);
                     for (OmopEntry entry : this.entries) {
                         if (entry.isEqual(contig, start, ref, alt)) {
-                            System.out.println(entry);
+                            List<TranscriptAnnotation> annots = va.getTranscriptAnnotations();
+                            for (TranscriptAnnotation ann : annots) {
+                                System.out.printf("%d\t%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
+                                        entry.getOmopId(),
+                                        this.genomeAssembly,
+                                        va.getChromosomeName(),
+                                        va.getPosition(),
+                                        va.getRef(),
+                                        va.getAlt(),
+                                        va.getGeneSymbol(),
+                                        va.getGeneId(),
+                                        va.getVariantEffect(),
+                                        ann.getHgvsGenomic(),
+                                        ann.getHgvsCdna(),
+                                        ann.getHgvsProtein());
+                            }
                         }
                     }
 

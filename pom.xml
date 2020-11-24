@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.monarchinitiative</groupId>
     <artifactId>omopulator</artifactId>
-    <version>0.2.5</version>
+    <version>0.3.1</version>
     <packaging>jar</packaging>
 
-    <name>oncembobulator</name>
+    <name>omopulator</name>
     <url>https://github.com/pnrobinson/omopulator</url>
 
     <properties>
@@ -20,6 +20,7 @@
         <junit.version>5.6.1</junit.version>
         <junit.jupiter.version>5.7.0-M1</junit.jupiter.version>
         <junit.platform.version>1.7.0-M1</junit.platform.version>
+        <exomiser.version>12.1.0</exomiser.version>
         <jannovar.version>0.35</jannovar.version>
     </properties>
 
@@ -48,6 +49,91 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <dependency>
+            <groupId>org.monarchinitiative.exomiser</groupId>
+            <artifactId>exomiser-core</artifactId>
+            <version>${exomiser.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>ontologizer</groupId>
+                    <artifactId>ontologizer</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java-util</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-annotations</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.dataformat</groupId>
+                    <artifactId>jackson-dataformat-protobuf</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.dataformat</groupId>
+                    <artifactId>jackson-dataformat-yaml</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-net</groupId>
+                    <artifactId>commons-net</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.errorprone</groupId>
+                    <artifactId>error_prone_annotations</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.samtools</groupId>
+                    <artifactId>htsjdk</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jcl-over-slf4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j18-impl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-compress</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
 
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

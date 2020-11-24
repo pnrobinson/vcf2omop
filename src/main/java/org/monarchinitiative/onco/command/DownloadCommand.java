@@ -12,7 +12,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.Callable;
 
-import static org.monarchinitiative.onco.analysis.FilePaths.*;
 
 
 /**
@@ -23,12 +22,12 @@ import static org.monarchinitiative.onco.analysis.FilePaths.*;
  */
 @CommandLine.Command(name = "download",  mixinStandardHelpOptions = true, description = "Download files")
 public class DownloadCommand implements Callable<Integer> {
-    static Logger logger = LoggerFactory.getLogger(DownloadCommand.class);
-
-    private static final String oncokbURL="http://oncokb.org/api/v1/utils/allActionableVariants.txt";
+    static final Logger logger = LoggerFactory.getLogger(DownloadCommand.class);
 
 
-    private static final String civicURL="https://civicdb.org/downloads/nightly/nightly-VariantSummaries.tsv";
+
+
+    private static final String clinvarLocalPath="data/clinvarGRCh38.vcf.gz";
 
 
     private static final String clinvarURL="ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz";
@@ -37,8 +36,6 @@ public class DownloadCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         logger.debug("Executing DownloadOnkoKB");
-        download(oncokbURL, oncokbLocalPath);
-        download(civicURL, civicLocalPath);
         download(clinvarURL, clinvarLocalPath);
         return 0;
     }

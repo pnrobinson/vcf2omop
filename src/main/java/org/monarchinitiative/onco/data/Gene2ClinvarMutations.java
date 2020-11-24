@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Gene2ClinvarMutations {
-    static Logger logger = LoggerFactory.getLogger(Gene2ClinvarMutations.class);
+    static final Logger logger = LoggerFactory.getLogger(Gene2ClinvarMutations.class);
     private String genesymbol=null;
 
-    private List<Annotation> annots;
+    private final List<Annotation> annots;
 
     public Gene2ClinvarMutations(String sym) {
         genesymbol=sym;

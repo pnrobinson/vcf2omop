@@ -27,7 +27,7 @@ import java.io.File;
 import java.util.*;
 
 public class ClinvarParser {
-    static Logger logger = LoggerFactory.getLogger(ClinvarParser.class);
+    static final Logger logger = LoggerFactory.getLogger(ClinvarParser.class);
 
     private static final String jannovarfile="data/hg38_refseq.ser";
 
@@ -43,7 +43,7 @@ public class ClinvarParser {
 
     private VariantContextAnnotator annotator;
 
-    private List<VariantAnnotations> annotlist;
+    private final List<VariantAnnotations> annotlist;
 
     private Map<String,Gene2ClinvarMutations> gene2mutMap=null;
 
@@ -128,19 +128,17 @@ public class ClinvarParser {
             final long startTime = System.nanoTime();
 
 
-            CloseableIterator<VariantContext> iter= vcfReader.iterator();
-
-            while (iter.hasNext()) {
-                VariantContext vc = iter.next();
+            for (VariantContext vc : vcfReader) {
                 ImmutableList<VariantAnnotations> vclst = this.annotator.buildAnnotations(vc);
-                for (VariantAnnotations va: vclst) {
+                for (VariantAnnotations va : vclst) {
                     ImmutableList<Annotation> annots = va.getAnnotations(); /* get all possible annotations for this variant. */
                     for (Annotation ann : annots) {
-                        String sym=ann.getGeneSymbol();
+                        String sym = ann.getGeneSymbol();
                         //if (sym.startsWith("ID"))
                         //logger.trace("Annotation had gene symbol \""+sym+"\"");
                         if (this.activegenesymbols.contains(sym)) {
-                            addAnnotation(sym,ann); n++;
+                            addAnnotation(sym, ann);
+                            n++;
                         }
                     }
                     //System.out.println(va.toString());
