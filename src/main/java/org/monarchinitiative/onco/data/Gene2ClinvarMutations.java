@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class Gene2ClinvarMutations {
     static final Logger logger = LoggerFactory.getLogger(Gene2ClinvarMutations.class);
     private String genesymbol=null;

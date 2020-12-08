@@ -13,7 +13,6 @@ import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import org.monarchinitiative.exomiser.core.model.ChromosomalRegionIndex;
 import org.monarchinitiative.exomiser.core.model.RegulatoryFeature;
-import org.monarchinitiative.exomiser.core.model.TranscriptAnnotation;
 import org.monarchinitiative.exomiser.core.model.VariantAnnotation;
 import org.monarchinitiative.onco.data.OmopEntry;
 import org.monarchinitiative.onco.data.OmopMapParser;
@@ -24,6 +23,7 @@ import org.monarchinitiative.exomiser.core.genome.GenomeAssembly;
 import org.monarchinitiative.exomiser.core.genome.JannovarVariantAnnotator;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -69,11 +69,19 @@ public class Ompopulate {
      */
     private List<String> samplenames;
 
+    private final List<OmopAnnotatedVariant> variantAnnotations;
+
+    private final boolean showAllAffectedTranscripts;
+
+
+
+
     /** Must be one of GRCh19 or GRCh38. */
     private final String genomeAssembly;
 
-    public Ompopulate(String jannovarPath, String vcfPath, String assembly) {
+    public Ompopulate(String jannovarPath, String vcfPath, String assembly, boolean showAll) {
         this.genomeAssembly = assembly;
+        this.showAllAffectedTranscripts = showAll;
         OmopMapParser parser = new OmopMapParser(genomeAssembly);
         this.entries = parser.getEntries();
         try {
@@ -90,13 +98,10 @@ public class Ompopulate {
         this.referenceDictionary = jannovarData.getRefDict();
         this.chromosomeMap = jannovarData.getChromosomes();
         this.vcfFilePath = f.getAbsolutePath();
+        this.variantAnnotations = new ArrayList<>();
         parseVcf();
     }
 
-
-
-    private final String [] header = {"OMOP.id", "assembly", "chromosome", "position", "reference", "alternate", "gene", "gene.id", "variant.effect",
-                        "hgvs.genomic", "hgvs.cdna", "hgvs.protein"};
 
 
     private void parseVcf() {
@@ -104,7 +109,6 @@ public class Ompopulate {
         final boolean useInterval = false;
         final long startTime = System.nanoTime();
         System.out.println("[INFO] VCF: " + this.vcfFilePath);
-        System.out.println(String.join("\t", header));
         try (VCFFileReader vcfReader = new VCFFileReader(new File(this.vcfFilePath), useInterval)) {
             //final SAMSequenceDictionary seqDict = VCFFileReader.getSequenceDictionary(new File(getOptionalVcfPath));
             VCFHeader vcfHeader = vcfReader.getFileHeader();
@@ -143,30 +147,17 @@ public class Ompopulate {
                     ChrPosition pos = new ChrPosition(contig, start, end);
                     for (OmopEntry entry : this.entries) {
                         if (entry.isEqual(contig, start, ref, alt)) {
-                            List<TranscriptAnnotation> annots = va.getTranscriptAnnotations();
-                            for (TranscriptAnnotation ann : annots) {
-                                System.out.printf("%d\t%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-                                        entry.getOmopId(),
-                                        this.genomeAssembly,
-                                        va.getChromosomeName(),
-                                        va.getPosition(),
-                                        va.getRef(),
-                                        va.getAlt(),
-                                        va.getGeneSymbol(),
-                                        va.getGeneId(),
-                                        va.getVariantEffect(),
-                                        ann.getHgvsGenomic(),
-                                        ann.getHgvsCdna(),
-                                        ann.getHgvsProtein());
-                            }
+                            this.variantAnnotations.add(new OmopAnnotatedVariant(entry.getOmopId(), genomeAssembly.toString(), va));
                         }
                     }
-
-
                 }
             }
         }
-        System.out.printf("[INFO] VCF had a total of %d variants and and %d low-quality variants filtered out.\n", n_good_quality_variants, n_filtered_variants);
+        System.out.printf("[INFO] VCF had a total of %d variants. %d low-quality variants were filtered out.\n", n_good_quality_variants, n_filtered_variants);
+    }
+
+    public List<OmopAnnotatedVariant> getVariantAnnotations() {
+        return this.variantAnnotations;
     }
 
 

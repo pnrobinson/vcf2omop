@@ -15,7 +15,6 @@ import de.charite.compbio.jannovar.htsjdk.VariantContextAnnotator;
 import de.charite.compbio.jannovar.progress.GenomeRegionListFactoryFromSAMSequenceDictionary;
 import de.charite.compbio.jannovar.progress.ProgressReporter;
 import htsjdk.samtools.SAMSequenceDictionary;
-import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
@@ -26,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.*;
 
+@Deprecated
 public class ClinvarParser {
     static final Logger logger = LoggerFactory.getLogger(ClinvarParser.class);
 
@@ -164,7 +164,7 @@ public class ClinvarParser {
             progressReporter.done();
     }
 
-    /** For easier processing, we will store all annotations (mutations from ClinVar) that correpsond to
+    /** For easier processing, we will store all annotations (mutations from ClinVar) that correspond to
      * a given gene symbol in their own class instance.
      * @param sym
      * @param ann

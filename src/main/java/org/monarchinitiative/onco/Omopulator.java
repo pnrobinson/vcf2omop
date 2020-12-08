@@ -2,7 +2,6 @@ package org.monarchinitiative.onco;
 
 
 
-import de.charite.compbio.jannovar.JannovarException;
 import org.monarchinitiative.onco.command.DownloadCommand;
 import org.monarchinitiative.onco.command.JannovarDownloadCommand;
 import org.monarchinitiative.onco.command.OmopulateCommand;

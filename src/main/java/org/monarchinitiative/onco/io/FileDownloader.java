@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.SocketException;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -30,24 +29,24 @@ public class FileDownloader {
     static final Logger logger = LoggerFactory.getLogger(FileDownloader.class);
 
     public static class ProxyOptions {
-        public String host = null;
-        public int port = -1;
-        public String user = null;
-        public String password = null;
+        public final String host = null;
+        public final int port = -1;
+        public final String user = null;
+        public final String password = null;
     }
 
     /**
      * Configuration for the {@link FileDownloader}.
      */
     public static class Options {
-        public boolean printProgressBar = false;
-        public ProxyOptions http = new ProxyOptions();
-        public ProxyOptions https = new ProxyOptions();
-        public ProxyOptions ftp = new ProxyOptions();
+        public final boolean printProgressBar = false;
+        public final ProxyOptions http = new ProxyOptions();
+        public final ProxyOptions https = new ProxyOptions();
+        public final ProxyOptions ftp = new ProxyOptions();
     }
 
     /** configuration for the downloader */
-    Options options;
+    final Options options;
 
     /** Initializer FileDownloader with the given options string */
     public FileDownloader(Options options) {
