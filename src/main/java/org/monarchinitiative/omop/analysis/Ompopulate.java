@@ -1,4 +1,4 @@
-package org.monarchinitiative.onco.analysis;
+package org.monarchinitiative.omop.analysis;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -14,8 +14,8 @@ import htsjdk.variant.vcf.VCFHeader;
 import org.monarchinitiative.exomiser.core.model.ChromosomalRegionIndex;
 import org.monarchinitiative.exomiser.core.model.RegulatoryFeature;
 import org.monarchinitiative.exomiser.core.model.VariantAnnotation;
-import org.monarchinitiative.onco.data.OmopEntry;
-import org.monarchinitiative.onco.data.OmopMapParser;
+import org.monarchinitiative.omop.data.OmopEntry;
+import org.monarchinitiative.omop.data.OmopMapParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

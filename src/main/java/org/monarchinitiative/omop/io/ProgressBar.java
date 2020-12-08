@@ -1,4 +1,4 @@
-package org.monarchinitiative.onco.io;
+package org.monarchinitiative.omop.io;
 
 
 /**

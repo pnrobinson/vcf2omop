@@ -1,8 +1,8 @@
-package org.monarchinitiative.onco.analysis;
+package org.monarchinitiative.omop.analysis;
 
 import org.monarchinitiative.exomiser.core.model.TranscriptAnnotation;
 import org.monarchinitiative.exomiser.core.model.VariantAnnotation;
-import org.monarchinitiative.onco.except.OmopulatorRuntimeException;
+import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class OmopAnnotatedVariant {
 
     public OmopAnnotatedTranscript getHighestImpactAnnotation() {
         if (! hasAnnotation()) {
-            throw new OmopulatorRuntimeException("Attempt to retrieve non-existent annotation");
+            throw new Vcf2OmopRuntimeException("Attempt to retrieve non-existent annotation");
         }
         return this.transcriptAnnotations.get(0); // annotations are pre-sorted!
     }

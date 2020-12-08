@@ -1,4 +1,4 @@
-package org.monarchinitiative.onco.data;
+package org.monarchinitiative.omop.data;
 
 /**
  * One entry (line) from the omopmap file

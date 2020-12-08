@@ -1,4 +1,4 @@
-package org.monarchinitiative.onco.analysis;
+package org.monarchinitiative.omop.analysis;
 
 import java.util.Objects;
 

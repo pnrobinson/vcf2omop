@@ -1,42 +1,55 @@
-package org.monarchinitiative.onco.command;
+package org.monarchinitiative.omop.command;
 
 
-import org.monarchinitiative.onco.analysis.OmopAnnotatedTranscript;
-import org.monarchinitiative.onco.analysis.OmopAnnotatedVariant;
-import org.monarchinitiative.onco.analysis.Ompopulate;
-import org.monarchinitiative.onco.data.Gene2ClinvarMutations;
+import org.monarchinitiative.omop.analysis.OmopAnnotatedTranscript;
+import org.monarchinitiative.omop.analysis.OmopAnnotatedVariant;
+import org.monarchinitiative.omop.analysis.Ompopulate;
+import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "omopulate",  mixinStandardHelpOptions = true, description = "omopulate")
-public class OmopulateCommand implements Callable<Integer>  {
-    static final Logger logger = LoggerFactory.getLogger(OmopulateCommand.class);
+@CommandLine.Command(name = "vcf2omop",  mixinStandardHelpOptions = true, description = "extract OMOP-annotated vars from VCF")
+public class Vcf2OmopCommand implements Callable<Integer>  {
+    static final Logger logger = LoggerFactory.getLogger(Vcf2OmopCommand.class);
     @CommandLine.Option(names = {"--vcf"}, description ="path to VCF file", required = true)
     private String vcfPath;
     @CommandLine.Option(names = {"-j", "--jannovar"}, description = "path to Jannovar transcript file")
-    private String jannovarPath;
+    private String jannovarPath=null;
     @CommandLine.Option(names = {"-a", "--assembly"}, description = "genome assembly (hg19,hg38")
     private String assembly="GRCh38";
     @CommandLine.Option(names = {"--all"}, description = "Show all affected transcripts (default: ${DEFAULT-VALUE})")
     boolean showAll = false;
+    @CommandLine.Option(names = {"-d", "--data"}, description = "location of download directory (default: ${DEFAULT-VALUE})")
+    private String downloadDir = "data";
     @CommandLine.Option(names = {"-p", "--prefix"}, description = "Outfile prefix")
     String prefix = "vcf2omop";
 
 
-    private Map<String,Gene2ClinvarMutations> gene2mutMap=null;
+    private String getJannovarPath() {
+        File f;
+        if (jannovarPath != null) {
+            f = new File(jannovarPath); // user specified the path to the Jannovar ser file
+        } else {
+            f = new File(downloadDir + File.separator + "hg38_refseq_curated.ser");
+        }
+        if (! f.exists()) {
+            throw new Vcf2OmopRuntimeException("Could not find Jannovar file at " + f.getAbsolutePath());
+        }
+        return f.getAbsolutePath();
+    }
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
         logger.debug("Executing vcf2omop");
-        Ompopulate ompopulate = new Ompopulate(jannovarPath, vcfPath, assembly, showAll);
+        Ompopulate ompopulate = new Ompopulate(getJannovarPath(), vcfPath, assembly, showAll);
         List<OmopAnnotatedVariant> annotations = ompopulate.getVariantAnnotations();
         dumpToShell(annotations);
         writeToFile(annotations);

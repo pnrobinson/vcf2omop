@@ -1,55 +1,70 @@
-# omopulator
-A tool to identify cancer-relevant variants in VCF files.
+# vcf2omop
+
+A tool to identify OMOP-listed variants in VCF files.
 
 ## Setup
-Using the version 36-SNAPSHOT of Jannovar, execute the following command
+
+To build the tool, you can clone the repository and use maven.
 ```
- java -Xmx8g -jar jannovar-cli/target/jannovar-cli-0.36-SNAPSHOT.jar download -d hg38/refseq_curated
+https://github.com/pnrobinson/vcf2omop.git
+cd vcf2omop
+mvn package
 ```
-This creates a file called
+This will create a Java app in the ``target`` directory. To check whether the build was
+successful, enter the following.
 ```
-data/hg38_refseq_curated.ser 
+$ java -jar target/vcf2omop.jar 
+Usage: vcf2omop [-hV] [COMMAND]
+Extract omop-encoded variants
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+Commands:
+  download  Download files
+  vcf2omop  extract OMOP-annotated vars from VCF
 ```
 
+
+The tool uses a transcript data file from the [Jannovar project](https://github.com/charite/jannovar). It is possible
+to build data files for UCSC, RefSeq, or Ensembl and pass them to this app with the ``-j`` flag.
+For conveniece, we have uploaded a transcript file for curated refseq to 
+Zenodo [4311513](https://zenodo.org/record/4311513). You can use the download command to 
+download this file using the vcf2omop tool
+
+
+```
+$ java -jar target/vcf2omop.jar download
+
+```
+
+
 ## To run the app
-```bash
-git clone https://github.com/pnrobinson/omopulator.git
-cd omopulator
-mvn package
-java -jar target/omopulator.jar jannovar
-java -jar target/omopulator.jar omopulate -v <path-to-vcf-file> -j <path/data/hg38_refseq_curated.ser>
+After setting up the app as above, all you need is a VCF file. By default, we expect an ``hg38`` VCF file
+(if you want to analyze an hg19 VCF file, you will need to use a corresponding Jannovar transcript file, see
+the Jannovar site for documentation).
+
+```
+$ java -jar target/vcf2omop.jar vcf2omop --vcf <path/to/vcf>
+
 ```
 
 ## To run the demo
 
-We have created a demo with 72 variants including threee cancer-relevant variants
-that were spiked in:
-
-* chr17:31357058C>G
-* chr12:76346442CT>C
-* chrX:71223934T>G
+We have spiked in 2 OMOP-relevant variants for a demo. THe VCF file is available at
+``src/main/resources/sample-hg38.vcf``
 
 The corresponding VCF file is located here:
 ```
 src/main/resources/sample.vcf
 ```
-The corresponding preliminary OMOP map is here (I added just a small excerpt):
+Therefore, run the app as follows.
 ```
-src/main/resources/omopmap.csv
-```
-To run the app, enter
-```
-java -jar target/omopulator.jar -v src/main/resources/sample.vcf -j <path/to/hg38_refseq_curated.ser>
+$ java -jar target/vcf2omop.jar vcf2omop --vcf src/main/resources/sample.vcf
 ```
 
-Replace `<path/to/hg38_refseq_curated.ser>` with the correct path on your system.
-
-
-This is the output
+This is the output (both to the command line and to a file, which by default is called ``vcf2omop.tsv``).
 ```
-[INFO] VCF: /home/peter/IdeaProjects/omopulator/src/main/resources/sample.vcf
-17:31357058C>G [ALLELEID=138629]
-12:76346442CT>C [ALLELEID=358111]
-X:71223934T>G [ALLELEID=625537]
-[INFO] VCF had a total of 72 variants and and 0 low-quality variants filtered out.
+36740245	hg38	chr1	92836283	G	A	RPL5	6125	MISSENSE_VARIANT	g.92836283G>A	c.418G>A	p.(Gly140Ser)
+35981554	hg38	chr7	5982885	C	T	PMS2	5395	MISSENSE_VARIANT	g.5982885C>T	c.2113G>A	p.(Glu705Lys)
 ```
+
+Run the app with the ``--all`` flag to see all transcripts.

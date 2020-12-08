@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.monarchinitiative</groupId>
-    <artifactId>omopulator</artifactId>
-    <version>0.3.4</version>
+    <artifactId>vcf2omop</artifactId>
+    <version>0.3.9</version>
     <packaging>jar</packaging>
 
     <name>vcf2omop</name>
@@ -17,6 +17,7 @@
         <java.version>8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <slf4j.version>1.7.30</slf4j.version>
         <junit.jupiter.version>5.7.0</junit.jupiter.version>
         <junit.platform.version>1.7.0</junit.platform.version>
         <exomiser.version>12.1.0</exomiser.version>
@@ -24,8 +25,6 @@
     </properties>
 
     <dependencies>
-
-        <!-- https://mvnrepository.com/artifact/de.charite.compbio/jannovar-core -->
         <dependency>
             <groupId>de.charite.compbio</groupId>
             <artifactId>jannovar-core</artifactId>
@@ -137,16 +136,21 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.14.0</version>
+            <version>2.13.1</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.google.collections/google-collections -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+
         <dependency>
             <groupId>com.google.collections</groupId>
             <artifactId>google-collections</artifactId>
             <version>1.0</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -192,14 +196,12 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/commons-net/commons-net -->
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>3.7.2</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/info.picocli/picocli -->
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
@@ -209,7 +211,8 @@
     </dependencies>
 
     <build>
-        <!--  <sourceDirectory>src</sourceDirectory> -->
+        <finalName>vcf2omop</finalName>
+        <sourceDirectory>src</sourceDirectory>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -227,7 +230,7 @@
                 </includes>
             </resource> -->
         </resources>
-        <finalName>vcf2omop</finalName>
+
 
         <plugins>
             <plugin>
@@ -250,7 +253,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <useUniqueVersions>false</useUniqueVersions>
-                            <mainClass>org.monarchinitiative.onco.Omopulator</mainClass>
+                            <mainClass>org.monarchinitiative.omop.Vcf2Omop</mainClass>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                     </archive>
@@ -276,6 +279,41 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.2</version>
+                <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>**/Log4j2Plugins.dat</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>org.monarchinitiative.omop.Vcf2Omop</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.1.0</version>

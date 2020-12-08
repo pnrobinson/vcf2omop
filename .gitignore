@@ -29,3 +29,5 @@ target/**
 .idea
 .oncembobulator.iml
 /data/
+/vcf2omop.tsv
+/vcf2omop.iml

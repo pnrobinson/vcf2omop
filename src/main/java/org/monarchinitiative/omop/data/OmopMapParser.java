@@ -1,6 +1,6 @@
-package org.monarchinitiative.onco.data;
+package org.monarchinitiative.omop.data;
 
-import org.monarchinitiative.onco.except.OmopulatorRuntimeException;
+import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -36,7 +36,7 @@ public class OmopMapParser {
             String line;
             line = br.readLine(); // first line expected to be a header line
             if (! line.equals("chromosome,pos,ref,alt,concept_id,assembly")) {
-                throw new OmopulatorRuntimeException("Unexpected format of OMOP mapping file: " + line);
+                throw new Vcf2OmopRuntimeException("Unexpected format of OMOP mapping file: " + line);
             }
             while ((line= br.readLine()) != null) {
                 String [] fields = line.split(",");
