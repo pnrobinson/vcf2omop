@@ -1,5 +1,7 @@
 package org.monarchinitiative.omop.data;
 
+import java.util.Objects;
+
 /**
  * One entry (line) from the omopmap file
  * 1	100068	G	A	36739402
@@ -47,6 +49,22 @@ public class OmopEntry {
 
     public int getOmopId() {
         return omopId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.chromosome, this.position, this.ref, this.alt, this.omopId);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (! (obj instanceof OmopEntry)) return false;
+        OmopEntry that = (OmopEntry) obj;
+        return this.chromosome.equals(that.chromosome) &&
+                this.position == that.position &&
+                this.ref.equals(that.ref) &&
+                this.alt.equals(that.alt) &&
+                this.omopId == that.omopId;
     }
 
     @Override
