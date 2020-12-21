@@ -1,11 +1,8 @@
 package org.monarchinitiative.omop.analysis;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import de.charite.compbio.jannovar.annotation.Annotation;
 import de.charite.compbio.jannovar.annotation.VariantAnnotations;
 import de.charite.compbio.jannovar.annotation.VariantAnnotator;
-import de.charite.compbio.jannovar.annotation.VariantEffect;
 import de.charite.compbio.jannovar.annotation.builders.AnnotationBuilderOptions;
 import de.charite.compbio.jannovar.data.*;
 import de.charite.compbio.jannovar.htsjdk.VariantContextAnnotator;
@@ -38,7 +35,7 @@ public class Ompopulate {
     /**
      * Reference dictionary that is part of {@link #jannovarData}.
      */
-    private final ReferenceDictionary referenceDictionary;
+    private final ReferenceDictionary refDict;
     /**
      * Map of Chromosomes, used in the annotation.
      */
@@ -100,7 +97,7 @@ public class Ompopulate {
         if (!f.exists()) {
             throw new RuntimeException("Could not find VCF file at " + vcfPath);
         }
-        this.referenceDictionary = jannovarData.getRefDict();
+        this.refDict = jannovarData.getRefDict();
         this.chromosomeMap = jannovarData.getChromosomes();
         this.vcfFilePath = f.getAbsolutePath();
         this.variantAnnotations = new ArrayList<>();
@@ -110,11 +107,9 @@ public class Ompopulate {
 
 
     private void parseVcf() {
-        // whether or not to just look at a specific genomic interval
-        final boolean useInterval = false;
         final long startTime = System.nanoTime();
         System.out.println("[INFO] VCF: " + this.vcfFilePath);
-        try (VCFFileReader vcfReader = new VCFFileReader(new File(this.vcfFilePath), useInterval)) {
+        try (VCFFileReader vcfReader = new VCFFileReader(new File(this.vcfFilePath), false)) {
             //final SAMSequenceDictionary seqDict = VCFFileReader.getSequenceDictionary(new File(getOptionalVcfPath));
             VCFHeader vcfHeader = vcfReader.getFileHeader();
             this.samplenames = vcfHeader.getSampleNamesInOrder();
@@ -123,14 +118,10 @@ public class Ompopulate {
             logger.trace("Annotating VCF at " + this.vcfFilePath + " for sample " + this.samplename);
             CloseableIterator<VariantContext> iter = vcfReader.iterator();
             VariantContextAnnotator variantEffectAnnotator =
-                    new VariantContextAnnotator(this.referenceDictionary, this.chromosomeMap,
+                    new VariantContextAnnotator(this.refDict, this.chromosomeMap,
                             new VariantContextAnnotator.Options());
             String genomeAssembly = "HG38";
-//            List<RegulatoryFeature> emtpylist = ImmutableList.of();
-//
-//            ChromosomalRegionIndex<RegulatoryFeature> emptyRegionIndex = ChromosomalRegionIndex.of(emtpylist);
-//            JannovarVariantAnnotator jannovarVariantAnnotator = new JannovarVariantAnnotator(genomeAssembly, jannovarData, emptyRegionIndex);
-            final VariantAnnotator annotator = new VariantAnnotator(jannovarData.getRefDict(), chromosomeMap, new AnnotationBuilderOptions());
+            final VariantAnnotator annotator = new VariantAnnotator(this.refDict, chromosomeMap, new AnnotationBuilderOptions());
             while (iter.hasNext()) {
                 VariantContext vc = iter.next();
                 if (vc.isFiltered()) {
@@ -141,7 +132,6 @@ public class Ompopulate {
                     n_good_quality_variants++;
                 }
                 vc = variantEffectAnnotator.annotateVariantContext(vc);
-                //variantEffectAnnotator.
                 List<Allele> altAlleles = vc.getAlternateAlleles();
                 String contig = vc.getContig();
                 int start = vc.getStart();
@@ -149,13 +139,9 @@ public class Ompopulate {
                 for (Allele allele : altAlleles) {
                     String alt = allele.getBaseString();
                     int chr = jannovarData.getRefDict().getContigNameToID().get(contig);
-                    GenomeVariant genomeChange = new GenomeVariant(new GenomePosition(jannovarData.getRefDict(), Strand.FWD, chr, start, PositionType.ONE_BASED), ref, alt);
-// Construct VariantAnnotator for building the variant annotations.
-                    VariantAnnotations annoList = null;
+                    GenomeVariant genomeChange = new GenomeVariant(new GenomePosition(this.refDict, Strand.FWD, chr, start, PositionType.ONE_BASED), ref, alt);
                     try {
-                        annoList = annotator.buildAnnotations(genomeChange);
-                        int end = start + alt.length() - 1;
-                        ChrPosition pos = new ChrPosition(contig, start, end);
+                        VariantAnnotations annoList = annotator.buildAnnotations(genomeChange);
                         for (OmopEntry entry : this.entries) {
                             if (entry.isEqual(contig, start, ref, alt)) {
                                 this.variantAnnotations.add(new OmopAnnotatedVariant(entry.getOmopId(), genomeAssembly, annoList));
@@ -169,11 +155,12 @@ public class Ompopulate {
             }
         }
         System.out.printf("[INFO] VCF had a total of %d variants. %d low-quality variants were filtered out.\n", n_good_quality_variants, n_filtered_variants);
+        final long endTime = System.nanoTime();
+        System.out.printf("[INFO] Processing completed in %.2f seconds.\n", (1e-9*(endTime-startTime)));
     }
 
     public List<OmopAnnotatedVariant> getVariantAnnotations() {
         return this.variantAnnotations;
     }
-
 
 }
