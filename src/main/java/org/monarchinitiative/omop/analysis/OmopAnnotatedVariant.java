@@ -1,7 +1,7 @@
 package org.monarchinitiative.omop.analysis;
 
-import org.monarchinitiative.exomiser.core.model.TranscriptAnnotation;
-import org.monarchinitiative.exomiser.core.model.VariantAnnotation;
+import de.charite.compbio.jannovar.annotation.Annotation;
+import de.charite.compbio.jannovar.annotation.VariantAnnotations;
 import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
 
 import java.util.ArrayList;
@@ -11,19 +11,19 @@ public class OmopAnnotatedVariant {
 
     private final List<OmopAnnotatedTranscript> transcriptAnnotations;
 
-    public OmopAnnotatedVariant(int omopId, String assembly, VariantAnnotation vann) {
+    public OmopAnnotatedVariant(int omopId, String assembly, VariantAnnotations vann) {
         transcriptAnnotations = new ArrayList<>();
-        for (TranscriptAnnotation tannot : vann.getTranscriptAnnotations()) {
+        for (Annotation tannot : vann.getAnnotations()) {
             OmopAnnotatedTranscript otranscript = new OmopAnnotatedTranscript(
                     omopId,
                     assembly,
                     tannot,
-                    vann.getChromosomeName(),
-                    vann.getPosition(),
+                    vann.getChrName(),
+                    vann.getPos(),
                     vann.getRef(),
                     vann.getAlt(),
-                    vann.getGeneSymbol(),
-                    vann.getGeneId());
+                    tannot.getGeneSymbol(),
+                    "n/a");
             transcriptAnnotations.add(otranscript);
         }
     }

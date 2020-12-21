@@ -2,25 +2,30 @@ package org.monarchinitiative.omop.analysis;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import de.charite.compbio.jannovar.annotation.Annotation;
+import de.charite.compbio.jannovar.annotation.VariantAnnotations;
+import de.charite.compbio.jannovar.annotation.VariantAnnotator;
 import de.charite.compbio.jannovar.annotation.VariantEffect;
+import de.charite.compbio.jannovar.annotation.builders.AnnotationBuilderOptions;
 import de.charite.compbio.jannovar.data.*;
 import de.charite.compbio.jannovar.htsjdk.VariantContextAnnotator;
 import de.charite.compbio.jannovar.progress.ProgressReporter;
+import de.charite.compbio.jannovar.reference.GenomePosition;
+import de.charite.compbio.jannovar.reference.GenomeVariant;
+import de.charite.compbio.jannovar.reference.PositionType;
+import de.charite.compbio.jannovar.reference.Strand;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
-import org.monarchinitiative.exomiser.core.model.ChromosomalRegionIndex;
-import org.monarchinitiative.exomiser.core.model.RegulatoryFeature;
-import org.monarchinitiative.exomiser.core.model.VariantAnnotation;
+
 import org.monarchinitiative.omop.data.OmopEntry;
 import org.monarchinitiative.omop.data.OmopMapParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.monarchinitiative.exomiser.core.genome.GenomeAssembly;
-import org.monarchinitiative.exomiser.core.genome.JannovarVariantAnnotator;
+
 
 import java.io.File;
 import java.util.ArrayList;
@@ -120,10 +125,12 @@ public class Ompopulate {
             VariantContextAnnotator variantEffectAnnotator =
                     new VariantContextAnnotator(this.referenceDictionary, this.chromosomeMap,
                             new VariantContextAnnotator.Options());
-            GenomeAssembly genomeAssembly = GenomeAssembly.HG38;
-            List<RegulatoryFeature> emtpylist = ImmutableList.of();
-            ChromosomalRegionIndex<RegulatoryFeature> emptyRegionIndex = ChromosomalRegionIndex.of(emtpylist);
-            JannovarVariantAnnotator jannovarVariantAnnotator = new JannovarVariantAnnotator(genomeAssembly, jannovarData, emptyRegionIndex);
+            String genomeAssembly = "HG38";
+//            List<RegulatoryFeature> emtpylist = ImmutableList.of();
+//
+//            ChromosomalRegionIndex<RegulatoryFeature> emptyRegionIndex = ChromosomalRegionIndex.of(emtpylist);
+//            JannovarVariantAnnotator jannovarVariantAnnotator = new JannovarVariantAnnotator(genomeAssembly, jannovarData, emptyRegionIndex);
+            final VariantAnnotator annotator = new VariantAnnotator(jannovarData.getRefDict(), chromosomeMap, new AnnotationBuilderOptions());
             while (iter.hasNext()) {
                 VariantContext vc = iter.next();
                 if (vc.isFiltered()) {
@@ -141,14 +148,22 @@ public class Ompopulate {
                 String ref = vc.getReference().getBaseString();
                 for (Allele allele : altAlleles) {
                     String alt = allele.getBaseString();
-                    VariantAnnotation va = jannovarVariantAnnotator.annotate(contig, start, ref, alt);
-                    VariantEffect variantEffect = va.getVariantEffect();
-                    int end = start + alt.length() - 1;
-                    ChrPosition pos = new ChrPosition(contig, start, end);
-                    for (OmopEntry entry : this.entries) {
-                        if (entry.isEqual(contig, start, ref, alt)) {
-                            this.variantAnnotations.add(new OmopAnnotatedVariant(entry.getOmopId(), genomeAssembly.toString(), va));
+                    int chr = jannovarData.getRefDict().getContigNameToID().get(contig);
+                    GenomeVariant genomeChange = new GenomeVariant(new GenomePosition(jannovarData.getRefDict(), Strand.FWD, chr, start, PositionType.ONE_BASED), ref, alt);
+// Construct VariantAnnotator for building the variant annotations.
+                    VariantAnnotations annoList = null;
+                    try {
+                        annoList = annotator.buildAnnotations(genomeChange);
+                        int end = start + alt.length() - 1;
+                        ChrPosition pos = new ChrPosition(contig, start, end);
+                        for (OmopEntry entry : this.entries) {
+                            if (entry.isEqual(contig, start, ref, alt)) {
+                                this.variantAnnotations.add(new OmopAnnotatedVariant(entry.getOmopId(), genomeAssembly, annoList));
+                            }
                         }
+                    } catch (Exception e) {
+                        System.err.printf("[ERROR] Could not annotate variant %s!\n", vc.toString());
+                        e.printStackTrace(System.err);
                     }
                 }
             }

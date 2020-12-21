@@ -1,6 +1,6 @@
 package org.monarchinitiative.omop.analysis;
 
-import org.monarchinitiative.exomiser.core.model.TranscriptAnnotation;
+import de.charite.compbio.jannovar.annotation.Annotation;
 
 public class OmopAnnotatedTranscript {
 
@@ -22,7 +22,7 @@ public class OmopAnnotatedTranscript {
 
     public OmopAnnotatedTranscript(int omopId,
                                    String assembly,
-                                   TranscriptAnnotation tannot,
+                                   Annotation tannot,
                                    String chromName,
                                    int pos,
                                    String ref,
@@ -38,10 +38,10 @@ public class OmopAnnotatedTranscript {
         this.geneSymbol = geneSymbol;
         this.geneId = geneId;
 
-        this.hgvsGenomic = tannot.getHgvsGenomic();
-        this.hgvsTranscript = tannot.getHgvsCdna();
-        this.hgvsProtein = tannot.getHgvsProtein();
-        this.variantEffect = tannot.getVariantEffect().toString();
+        this.hgvsGenomic = tannot.getGenomicNTChangeStr();
+        this.hgvsTranscript = tannot.getCDSNTChangeStr();
+        this.hgvsProtein = tannot.getProteinChangeStr();
+        this.variantEffect = tannot.getMostPathogenicVarType().toString();
     }
 
     public String getTsvLine() {
