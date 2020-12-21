@@ -10,12 +10,11 @@ import java.util.Objects;
 
 /**
  * Simple immutable data class to represent annotations for a variant.
- *
- * @author Jules Jacobsen <j.jacobsen@qmul.ac.uk>
+ * Adapted from code by Jules Jacobsen <j.jacobsen@qmul.ac.uk>
  */
-public class MyVariantAnnotation  {
+public class VariantAnnotation {
 
-    private static final MyVariantAnnotation EMPTY = new Builder().build();
+    private static final VariantAnnotation EMPTY = new Builder().build();
 
     private final String genomeAssembly;
     private final int chromosome;
@@ -27,9 +26,9 @@ public class MyVariantAnnotation  {
     private final String geneSymbol;
     private final String geneId;
     private final VariantEffect variantEffect;
-    private final List<MyTranscriptAnnotation> annotations;
+    private final List<TranscriptAnnotation> annotations;
 
-    private MyVariantAnnotation(Builder builder) {
+    private VariantAnnotation(Builder builder) {
         this.genomeAssembly = builder.genomeAssembly;
         this.chromosome = builder.chromosome;
         this.chromosomeName = builder.chromosomeName;
@@ -78,7 +77,7 @@ public class MyVariantAnnotation  {
         return variantEffect;
     }
 
-    public List<MyTranscriptAnnotation> getTranscriptAnnotations() {
+    public List<TranscriptAnnotation> getTranscriptAnnotations() {
         return annotations;
     }
 
@@ -87,7 +86,7 @@ public class MyVariantAnnotation  {
         return !annotations.isEmpty();
     }
 
-    public static MyVariantAnnotation empty() {
+    public static VariantAnnotation empty() {
         return EMPTY;
     }
 
@@ -95,7 +94,7 @@ public class MyVariantAnnotation  {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        MyVariantAnnotation that = (MyVariantAnnotation) o;
+        VariantAnnotation that = (VariantAnnotation) o;
         return chromosome == that.chromosome &&
                 position == that.position &&
                 genomeAssembly.equals(that.genomeAssembly) &&
@@ -145,7 +144,7 @@ public class MyVariantAnnotation  {
         private String geneSymbol = "";
         private String geneId = "";
         private VariantEffect variantEffect = VariantEffect.SEQUENCE_VARIANT;
-        private List<MyTranscriptAnnotation> annotations = ImmutableList.of();
+        private List<TranscriptAnnotation> annotations = ImmutableList.of();
 
         public Builder genomeAssembly(String genomeAssembly) {
             this.genomeAssembly = genomeAssembly;
@@ -192,13 +191,13 @@ public class MyVariantAnnotation  {
             return this;
         }
 
-        public Builder annotations(List<MyTranscriptAnnotation> annotations) {
+        public Builder annotations(List<TranscriptAnnotation> annotations) {
             this.annotations = annotations;
             return this;
         }
 
-        public MyVariantAnnotation build() {
-            return new MyVariantAnnotation(this);
+        public VariantAnnotation build() {
+            return new VariantAnnotation(this);
         }
     }
 }

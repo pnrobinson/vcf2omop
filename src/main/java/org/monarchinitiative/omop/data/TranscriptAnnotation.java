@@ -26,11 +26,11 @@ import de.charite.compbio.jannovar.annotation.VariantEffect;
 import java.util.Objects;
 
 /**
- * @author Jules Jacobsen <j.jacobsen@qmul.ac.uk>
+ * Adapted from code by Jules Jacobsen <j.jacobsen@qmul.ac.uk>
  */
-public class MyTranscriptAnnotation {
+public class TranscriptAnnotation {
 
-    private static final MyTranscriptAnnotation EMPTY = MyTranscriptAnnotation.builder().build();
+    private static final TranscriptAnnotation EMPTY = TranscriptAnnotation.builder().build();
 
     private final VariantEffect variantEffect;
 
@@ -43,7 +43,7 @@ public class MyTranscriptAnnotation {
 
     private final int distanceFromNearestGene;
 
-    private MyTranscriptAnnotation(Builder builder) {
+    private TranscriptAnnotation(Builder builder) {
         this.variantEffect = builder.variantEffect;
         this.geneSymbol = builder.geneSymbol;
         this.accession = builder.accession;
@@ -53,7 +53,7 @@ public class MyTranscriptAnnotation {
         this.distanceFromNearestGene = builder.distanceFromNearestGene;
     }
 
-    public static MyTranscriptAnnotation empty() {
+    public static TranscriptAnnotation empty() {
         return EMPTY;
     }
 
@@ -89,7 +89,7 @@ public class MyTranscriptAnnotation {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        MyTranscriptAnnotation that = (MyTranscriptAnnotation) o;
+        TranscriptAnnotation that = (TranscriptAnnotation) o;
         return distanceFromNearestGene == that.distanceFromNearestGene &&
                 variantEffect == that.variantEffect &&
                 Objects.equals(geneSymbol, that.geneSymbol) &&
@@ -169,8 +169,8 @@ public class MyTranscriptAnnotation {
             return this;
         }
 
-        public MyTranscriptAnnotation build() {
-            return new MyTranscriptAnnotation(this);
+        public TranscriptAnnotation build() {
+            return new TranscriptAnnotation(this);
         }
     }
 
