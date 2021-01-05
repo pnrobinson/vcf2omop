@@ -31,3 +31,4 @@ target/**
 /data/
 /vcf2omop.tsv
 /vcf2omop.iml
+/synonyms-vcf2omop-GRCh38.tsv
