@@ -38,7 +38,14 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
         if (jannovarPath != null) {
             f = new File(jannovarPath); // user specified the path to the Jannovar ser file
         } else {
-            f = new File(downloadDir + File.separator + "hg38_refseq_curated.ser");
+            if (assembly.equalsIgnoreCase("GRCh38") || assembly.equalsIgnoreCase("hg38")) {
+                f = new File(downloadDir + File.separator + "hg38_refseq_curated.ser");
+            } else if (assembly.equalsIgnoreCase("GRCh37") || assembly.equalsIgnoreCase("hg19")) {
+                f = new File(downloadDir + File.separator + "hg_refseq.ser");
+            } else {
+                throw new Vcf2OmopRuntimeException("Did not recognize assembly: " + assembly
+                + ", valid values include hg19,hg38");
+            }
         }
         if (! f.exists()) {
             throw new Vcf2OmopRuntimeException("Could not find Jannovar file at " + f.getAbsolutePath());

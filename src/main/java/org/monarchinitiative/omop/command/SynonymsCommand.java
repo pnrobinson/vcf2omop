@@ -30,12 +30,12 @@ import java.util.concurrent.Callable;
 /**
  * Generate table with all transcript-annotations linked to a given chromosomal change in the OMOP table
  */
-@CommandLine.Command(name = "synonyms",  mixinStandardHelpOptions = true, description = "Generate table with all transcript \"synonyms\"")
+@CommandLine.Command(name = "synonyms", mixinStandardHelpOptions = true, description = "Generate table with all transcript \"synonyms\"")
 public class SynonymsCommand implements Callable<Integer> {
     @CommandLine.Option(names = {"-j", "--jannovar"}, description = "path to Jannovar transcript file")
-    private String jannovarPath=null;
+    private String jannovarPath = null;
     @CommandLine.Option(names = {"-a", "--assembly"}, description = "genome assembly (hg19,hg38")
-    private String assembly="GRCh38";
+    private String assembly = "GRCh38";
     @CommandLine.Option(names = {"-d", "--data"}, description = "location of download directory (default: ${DEFAULT-VALUE})")
     private String downloadDir = "data";
     @CommandLine.Option(names = {"-p", "--prefix"}, description = "Outfile prefix")
@@ -54,7 +54,7 @@ public class SynonymsCommand implements Callable<Integer> {
      */
     private final ImmutableMap<Integer, Chromosome> chromosomeMap;
 
-    public SynonymsCommand(){
+    public SynonymsCommand() {
         String jannovarPath = getJannovarPath();
         try {
             this.jannovarData = new JannovarDataSerializer(jannovarPath).load();
@@ -65,49 +65,73 @@ public class SynonymsCommand implements Callable<Integer> {
         this.chromosomeMap = jannovarData.getChromosomes();
         OmopMapParser parser = new OmopMapParser(assembly);
         this.entries = parser.getEntries();
-
     }
 
-    private final static String [] header = {"omop.id", "chrom", "pos", "ref" , "alt", "gene.symbol", "hgvs.genomic", "hgvs.transcript", "hgvs.protein"};
+    private String getJannovarPath() {
+        File f;
+        if (jannovarPath != null) {
+            f = new File(jannovarPath); // user specified the path to the Jannovar ser file
+        } else {
+            if (assembly.equalsIgnoreCase("GRCh38") || assembly.equalsIgnoreCase("hg38")) {
+                f = new File(downloadDir + File.separator + "hg38_refseq_curated.ser");
+            } else if (assembly.equalsIgnoreCase("GRCh37") || assembly.equalsIgnoreCase("hg19")) {
+                f = new File(downloadDir + File.separator + "hg_refseq.ser");
+            } else {
+                throw new Vcf2OmopRuntimeException("Did not recognize assembly: " + assembly
+                        + ", valid values include hg19,hg38");
+            }
+        }
+        if (! f.exists()) {
+            throw new Vcf2OmopRuntimeException("Could not find Jannovar file at " + f.getAbsolutePath());
+        }
+        return f.getAbsolutePath();
+    }
+
+    private final static String[] header = {"omop.id", "chrom", "pos", "ref", "alt", "gene.symbol", "hgvs.genomic", "hgvs.transcript", "hgvs.protein"};
 
 
     @Override
     public Integer call() throws Exception {
         String outname = String.format("synonyms-%s-%s.tsv", this.prefix, this.assembly);
         final VariantAnnotator annotator = new VariantAnnotator(this.refDict, chromosomeMap, new AnnotationBuilderOptions());
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outname))){
-            writer.write(String.join("\t",header) + "\n");
-        for (OmopEntry entry : this.entries) {
-            String chrom = entry.getChromosome();
-            int omopId = entry.getOmopId();
-            int pos = entry.getPosition();
-            String ref = entry.getRef();
-            String alt = entry.getAlt();
-            int chr = jannovarData.getRefDict().getContigNameToID().get(chrom);
-            GenomeVariant genomeChange = new GenomeVariant(new GenomePosition(this.refDict, Strand.FWD, chr, pos, PositionType.ONE_BASED), ref, alt);
-
-
-            try {
-                VariantAnnotations annoList = annotator.buildAnnotations(genomeChange);
-                for (Annotation annot : annoList.getAnnotations()) {
-                    List<String> fields = new ArrayList<>();
-                    fields.add(String.valueOf(omopId));
-                    fields.add(chrom);
-                    fields.add(String.valueOf(pos));
-                    fields.add(ref);
-                    fields.add(alt);
-                    fields.add(annot.getGeneSymbol());
-                    fields.add(annot.getGenomicNTChangeStr());
-                    fields.add(annot.getCDSNTChangeStr());
-                    fields.add(annot.getProteinChangeStr());
-                    writer.write(String.join("\t",fields) + "\n");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outname))) {
+            writer.write(String.join("\t", header) + "\n");
+            for (OmopEntry entry : this.entries) {
+                String chrom = entry.getChromosome();
+                int omopId = entry.getOmopId();
+                int pos = entry.getPosition();
+                String ref = entry.getRef();
+                String alt = entry.getAlt();
+                int chr = jannovarData.getRefDict().getContigNameToID().get(chrom);
+                GenomeVariant genomeChange = new GenomeVariant(new GenomePosition(this.refDict, Strand.FWD, chr, pos, PositionType.ONE_BASED), ref, alt);
+                VariantAnnotations annoList;
+                try {
+                    annoList=annotator.buildAnnotations(genomeChange);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    continue;
                 }
-            } catch (Exception e) {
-                System.err.printf("[ERROR] Could not annotate entry %s!\n", entry.toString());
-                e.printStackTrace(System.err);
+                for (Annotation annot : annoList.getAnnotations()) {
+                    try {
+                        String symbol = annot.getGeneSymbol();
+                        String genomicHgvs = annot.getGenomicNTChangeStr();
+                        List<String> fields = new ArrayList<>();
+                        fields.add(String.valueOf(omopId));
+                        fields.add(chrom);
+                        fields.add(String.valueOf(pos));
+                        fields.add(ref);
+                        fields.add(alt);
+                        fields.add(symbol);
+                        fields.add(genomicHgvs);
+                        fields.add(annot.getCDSNTChangeStr());
+                        fields.add(annot.getProteinChangeStr());
+                        writer.write(String.join("\t", fields) + "\n");
+                    } catch (Exception e) {
+                        System.err.printf("[ERROR] Could not annotate entry %s!\n", entry.toString());
+                        e.printStackTrace(System.err);
+                    }
+                }
             }
-        }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -116,16 +140,5 @@ public class SynonymsCommand implements Callable<Integer> {
         return 0;
     }
 
-    private String getJannovarPath() {
-        File f;
-        if (jannovarPath != null) {
-            f = new File(jannovarPath); // user specified the path to the Jannovar ser file
-        } else {
-            f = new File(downloadDir + File.separator + "hg38_refseq_curated.ser");
-        }
-        if (! f.exists()) {
-            throw new Vcf2OmopRuntimeException("Could not find Jannovar file at " + f.getAbsolutePath());
-        }
-        return f.getAbsolutePath();
-    }
+
 }
