@@ -27,9 +27,8 @@ Commands:
 The tool uses a transcript data file from the [Jannovar project](https://github.com/charite/jannovar). It is possible
 to build data files for UCSC, RefSeq, or Ensembl and pass them to this app with the ``-j`` flag.
 For conveniece, we have uploaded a transcript file for curated refseq to 
-Zenodo [4311513](https://zenodo.org/record/4311513). You can use the download command to 
+Zenodo [4468026](https://zenodo.org/record/4468026). You can use the download command to 
 download this file using the vcf2omop tool
-
 
 ```
 $ java -jar target/vcf2omop.jar download
@@ -45,6 +44,13 @@ the Jannovar site for documentation).
 ```
 $ java -jar target/vcf2omop.jar vcf2omop --vcf <path/to/vcf>
 
+```
+
+## To generate synonyms
+This new feature generates a table of 'synoynms'.
+
+```
+$ java -jar target/vcf2omop.jar synonyms [-a hg19]
 ```
 
 ## To run the demo

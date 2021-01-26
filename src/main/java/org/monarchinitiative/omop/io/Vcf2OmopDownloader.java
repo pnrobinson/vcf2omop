@@ -19,9 +19,10 @@ public class Vcf2OmopDownloader {
     /** If true, download new version whether or not the file is already present. */
     private final boolean overwrite;
 
-
-    private static final String JannovarZenodoUrl = "https://zenodo.org/record/4311513/files/hg38_refseq_curated.ser?download=1";
-    private static final String JannovarFilename = "hg38_refseq_curated.ser";
+    private static final String JannovarHg19ZenodoUrl = "https://zenodo.org/record/4468026/files/hg19_refseq.ser?download=1";
+    private static final String JannovarHg38ZenodoUrl = "https://zenodo.org/record/4468026/files/hg38_refseq_curated.ser?download=1";
+    private static final String JannovarHg38Filename = "hg38_refseq_curated.ser";
+    private static final String JannovarHg19Filename = "hg19_refseq.ser";
     public Vcf2OmopDownloader(String path){
         this(path,false);
     }
@@ -36,28 +37,18 @@ public class Vcf2OmopDownloader {
      * Download the files unless they are already present.
      */
     public void download() {
-        int downloaded = 0;
-        downloaded += downloadFileIfNeeded(JannovarFilename,JannovarZenodoUrl);
-        if (downloaded > 0) {
-            System.out.printf("[INFO] Downloaded %s  to \"%s\"\n",
-                    JannovarFilename,
-                    downloadDirectory);
-        } else {
-            System.out.printf("[INFO] %s previously downloaded to \"%s\"\n",
-                    JannovarFilename,
-                    downloadDirectory);
-        }
-
+        downloadFileIfNeeded(JannovarHg38Filename, JannovarHg38ZenodoUrl);
+        downloadFileIfNeeded(JannovarHg19Filename, JannovarHg19ZenodoUrl);
     }
 
 
-    private int downloadFileIfNeeded(String filename, String webAddress) {
+    private void downloadFileIfNeeded(String filename, String webAddress) {
         File f = new File(String.format("%s%s%s",downloadDirectory,File.separator,filename));
         if (f.exists() && (! overwrite)) {
             logger.trace(String.format("Cowardly refusing to download %s since we found it at %s",
                     filename,
                     f.getAbsolutePath()));
-            return 0;
+            return;
         }
         FileDownloader downloader=new FileDownloader();
         try {
@@ -72,7 +63,6 @@ public class Vcf2OmopDownloader {
             logger.error(e.getMessage());
         }
         System.out.println("[INFO] Downloaded " + filename);
-        return 1;
     }
 
 

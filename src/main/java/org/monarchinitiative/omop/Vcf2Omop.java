@@ -3,6 +3,7 @@ package org.monarchinitiative.omop;
 
 
 import org.monarchinitiative.omop.command.DownloadCommand;
+import org.monarchinitiative.omop.command.SynonymsCommand;
 import org.monarchinitiative.omop.command.Vcf2OmopCommand;
 import picocli.CommandLine;
 
@@ -18,6 +19,7 @@ public class Vcf2Omop implements Callable<Integer>  {
         }
         CommandLine cline = new CommandLine(new Vcf2Omop()).
                 addSubcommand("download", new DownloadCommand()).
+                addSubcommand("synonyms", new SynonymsCommand()).
                 addSubcommand("vcf2omop", new Vcf2OmopCommand());
         cline.setToggleBooleanFlags(false);
         int exitCode = cline.execute(args);
