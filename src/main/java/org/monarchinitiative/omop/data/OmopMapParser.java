@@ -28,7 +28,12 @@ public class OmopMapParser {
     private final String genomeAssembly;
 
     public OmopMapParser(String assembly) {
-        this.genomeAssembly = assembly;
+        if (assembly.equalsIgnoreCase("hg19")) {
+            this.genomeAssembly = "GRCh37";
+        } else {
+            this.genomeAssembly = assembly;
+        }
+
         String path = "src/main/resources/table_omop.csv";
         entries = new ArrayList<>();
         final int EXPECTED_FIELD_COUNT = 6;

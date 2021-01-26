@@ -9,66 +9,55 @@ import java.util.Objects;
 public class OmopEntry {
 
     private static final String NOT_AVAILABLE = "";
-
-    private final String chromosome;
-    private final String ref;
-    private final String alt;
-    private final int position;
     private final int omopId;
+    private final VcfVariant variant;
 
     public OmopEntry(String chr, int pos, String ref, String alt, int id) {
-        if (chr.startsWith("chr"))
-            this.chromosome = chr;
-        else
-            this.chromosome = "chr" + chr;
-        this.position = pos;
-        this.ref = ref;
-        this.alt = alt;
+        this.variant = new VcfVariant(chr,pos, ref, alt);
         this.omopId = id;
     }
 
-    public boolean isEqual(String chromosome, int pos, String ref, String alt) {
-        return this.chromosome.equals(chromosome) && this.position == pos && this.ref.equals(ref) && this.alt.equals(alt);
-    }
+
 
     public String getChromosome() {
-        return chromosome;
+        return variant.getChromosome();
     }
 
     public String getRef() {
-        return ref;
+        return variant.getRef();
     }
 
     public String getAlt() {
-        return alt;
+        return variant.getAlt();
     }
 
     public int getPosition() {
-        return position;
+        return variant.getPosition();
     }
 
     public int getOmopId() {
         return omopId;
     }
 
+    public VcfVariant getVariant() {
+        return variant;
+    }
+
     @Override
     public int hashCode() {
-        return Objects.hash(this.chromosome, this.position, this.ref, this.alt, this.omopId);
+        return Objects.hash(this.variant, this.omopId);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (! (obj instanceof OmopEntry)) return false;
         OmopEntry that = (OmopEntry) obj;
-        return this.chromosome.equals(that.chromosome) &&
-                this.position == that.position &&
-                this.ref.equals(that.ref) &&
-                this.alt.equals(that.alt) &&
+        return this.variant.equals(that.variant) &&
                 this.omopId == that.omopId;
     }
 
     @Override
     public String toString() {
-        return String.format("%s:%d%s>%s", this.chromosome, this.position, this.ref, this.alt);
+        return String.format("%s:%d%s>%s[omop:%d", getChromosome(), getPosition(), getRef(), getAlt(), getOmopId());
     }
 }

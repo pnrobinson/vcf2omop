@@ -41,7 +41,7 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
             if (assembly.equalsIgnoreCase("GRCh38") || assembly.equalsIgnoreCase("hg38")) {
                 f = new File(downloadDir + File.separator + "hg38_refseq_curated.ser");
             } else if (assembly.equalsIgnoreCase("GRCh37") || assembly.equalsIgnoreCase("hg19")) {
-                f = new File(downloadDir + File.separator + "hg_refseq.ser");
+                f = new File(downloadDir + File.separator + "hg19_refseq.ser");
             } else {
                 throw new Vcf2OmopRuntimeException("Did not recognize assembly: " + assembly
                 + ", valid values include hg19,hg38");
@@ -68,6 +68,9 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
      * @param annotations
      */
     public void dumpToShell(List<OmopAnnotatedVariant> annotations) {
+        if (annotations.isEmpty()) {
+            System.out.println("[INFO] No annotations found");
+        }
         for (OmopAnnotatedVariant ovar : annotations) {
             if (showAll) {
                 for (OmopAnnotatedTranscript otran : ovar.getTranscriptAnnotations()) {

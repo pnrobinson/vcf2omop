@@ -19,6 +19,7 @@ import htsjdk.variant.vcf.VCFHeader;
 
 import org.monarchinitiative.omop.data.OmopEntry;
 import org.monarchinitiative.omop.data.OmopMapParser;
+import org.monarchinitiative.omop.data.VcfVariant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class Ompopulate {
@@ -73,6 +76,8 @@ public class Ompopulate {
 
     private final List<OmopAnnotatedVariant> variantAnnotations;
 
+    private final Map<VcfVariant, Integer> variant2omopIdMap;
+
     private final boolean showAllAffectedTranscripts;
 
 
@@ -84,8 +89,12 @@ public class Ompopulate {
     public Ompopulate(String jannovarPath, String vcfPath, String assembly, boolean showAll) {
         this.genomeAssembly = assembly;
         this.showAllAffectedTranscripts = showAll;
+        variant2omopIdMap = new HashMap<>();
         OmopMapParser parser = new OmopMapParser(genomeAssembly);
         this.entries = parser.getEntries();
+        for (OmopEntry e : entries) {
+            variant2omopIdMap.put(e.getVariant(), e.getOmopId());
+        }
         try {
             this.jannovarData = new JannovarDataSerializer(jannovarPath).load();
         } catch (SerializationException se) {
@@ -120,7 +129,6 @@ public class Ompopulate {
             VariantContextAnnotator variantEffectAnnotator =
                     new VariantContextAnnotator(this.refDict, this.chromosomeMap,
                             new VariantContextAnnotator.Options());
-            String genomeAssembly = "HG38";
             final VariantAnnotator annotator = new VariantAnnotator(this.refDict, chromosomeMap, new AnnotationBuilderOptions());
             while (iter.hasNext()) {
                 VariantContext vc = iter.next();
@@ -142,10 +150,10 @@ public class Ompopulate {
                     GenomeVariant genomeChange = new GenomeVariant(new GenomePosition(this.refDict, Strand.FWD, chr, start, PositionType.ONE_BASED), ref, alt);
                     try {
                         VariantAnnotations annoList = annotator.buildAnnotations(genomeChange);
-                        for (OmopEntry entry : this.entries) {
-                            if (entry.isEqual(contig, start, ref, alt)) {
-                                this.variantAnnotations.add(new OmopAnnotatedVariant(entry.getOmopId(), genomeAssembly, annoList));
-                            }
+                        VcfVariant candidate = new VcfVariant(contig, start, ref, alt);
+                        if (this.variant2omopIdMap.containsKey(candidate)) {
+                            int omopId = variant2omopIdMap.get(candidate);
+                            this.variantAnnotations.add(new OmopAnnotatedVariant(omopId, genomeAssembly, annoList));
                         }
                     } catch (Exception e) {
                         System.err.printf("[ERROR] Could not annotate variant %s!\n", vc.toString());
