@@ -46,6 +46,13 @@ $ java -jar target/vcf2omop.jar vcf2omop --vcf <path/to/vcf>
 
 ```
 
+## To generate synonyms
+This new feature generates a table of 'synoynms'.
+
+```
+$ java -jar target/vcf2omop.jar synonyms [-a hg19]
+```
+
 ## To run the demo
 
 We have spiked in 2 OMOP-relevant variants for a demo. THe VCF file is available at
