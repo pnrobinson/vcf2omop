@@ -43,19 +43,26 @@ public class SynonymsCommand implements Callable<Integer> {
 
 
     private final static Logger logger = LoggerFactory.getLogger(Ompopulate.class);
-    private final JannovarData jannovarData;
-    private final List<OmopEntry> entries;
+    private JannovarData jannovarData;
+    private List<OmopEntry> entries;
     /**
      * Reference dictionary that is part of {@link #jannovarData}.
      */
-    private final ReferenceDictionary refDict;
+    private ReferenceDictionary refDict;
     /**
      * Map of Chromosomes, used in the annotation.
      */
-    private final ImmutableMap<Integer, Chromosome> chromosomeMap;
+    private ImmutableMap<Integer, Chromosome> chromosomeMap;
 
     public SynonymsCommand() {
-        String jannovarPath = getJannovarPath();
+    }
+
+    private void initJannovar() {
+        if (assembly.equalsIgnoreCase("GRCh38")) {
+            jannovarPath = "data/hg38_refseq_curated.ser";
+        } else if (assembly.equalsIgnoreCase("hg19") || assembly.equalsIgnoreCase("GRCh37")) {
+            jannovarPath = "data/hg19_refseq.ser";
+        }
         try {
             this.jannovarData = new JannovarDataSerializer(jannovarPath).load();
         } catch (SerializationException se) {
@@ -63,11 +70,18 @@ public class SynonymsCommand implements Callable<Integer> {
         }
         this.refDict = jannovarData.getRefDict();
         this.chromosomeMap = jannovarData.getChromosomes();
-        OmopMapParser parser = new OmopMapParser(assembly);
-        this.entries = parser.getEntries();
+
     }
 
-    private String getJannovarPath() {
+    private final static String[] header = {"omop.id", "chrom", "pos", "ref", "alt", "gene.symbol", "hgvs.genomic", "hgvs.transcript", "hgvs.protein"};
+
+
+    @Override
+    public Integer call() throws Exception {
+        String outname = String.format("synonyms-%s-%s.tsv", this.prefix, this.assembly);
+        initJannovar();
+        OmopMapParser parser = new OmopMapParser(assembly);
+        this.entries = parser.getEntries();
         File f;
         if (jannovarPath != null) {
             f = new File(jannovarPath); // user specified the path to the Jannovar ser file
@@ -81,18 +95,6 @@ public class SynonymsCommand implements Callable<Integer> {
                         + ", valid values include hg19,hg38");
             }
         }
-        if (! f.exists()) {
-            throw new Vcf2OmopRuntimeException("Could not find Jannovar file at " + f.getAbsolutePath());
-        }
-        return f.getAbsolutePath();
-    }
-
-    private final static String[] header = {"omop.id", "chrom", "pos", "ref", "alt", "gene.symbol", "hgvs.genomic", "hgvs.transcript", "hgvs.protein"};
-
-
-    @Override
-    public Integer call() throws Exception {
-        String outname = String.format("synonyms-%s-%s.tsv", this.prefix, this.assembly);
         final VariantAnnotator annotator = new VariantAnnotator(this.refDict, chromosomeMap, new AnnotationBuilderOptions());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outname))) {
             writer.write(String.join("\t", header) + "\n");
@@ -108,7 +110,7 @@ public class SynonymsCommand implements Callable<Integer> {
                 try {
                     annoList=annotator.buildAnnotations(genomeChange);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    System.err.println("[ERROR] Could not annotate " + genomeChange);
                     continue;
                 }
                 for (Annotation annot : annoList.getAnnotations()) {
@@ -128,7 +130,6 @@ public class SynonymsCommand implements Callable<Integer> {
                         writer.write(String.join("\t", fields) + "\n");
                     } catch (Exception e) {
                         System.err.printf("[ERROR] Could not annotate entry %s!\n", entry.toString());
-                        e.printStackTrace(System.err);
                     }
                 }
             }
