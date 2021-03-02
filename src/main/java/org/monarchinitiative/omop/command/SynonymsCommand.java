@@ -125,7 +125,8 @@ public class SynonymsCommand implements Callable<Integer> {
                         fields.add(alt);
                         fields.add(symbol);
                         fields.add(genomicHgvs);
-                        fields.add(annot.getCDSNTChangeStr());
+                        String hgvsTranscript = String.format("%s:%s",annot.getTranscript().getAccession(),annot.getCDSNTChangeStr());
+                        fields.add(hgvsTranscript);
                         fields.add(annot.getProteinChangeStr());
                         writer.write(String.join("\t", fields) + "\n");
                     } catch (Exception e) {
