@@ -10,7 +10,6 @@ import de.charite.compbio.jannovar.reference.GenomePosition;
 import de.charite.compbio.jannovar.reference.GenomeVariant;
 import de.charite.compbio.jannovar.reference.PositionType;
 import de.charite.compbio.jannovar.reference.Strand;
-import org.monarchinitiative.omop.analysis.OmopAnnotatedVariant;
 import org.monarchinitiative.omop.analysis.Ompopulate;
 import org.monarchinitiative.omop.data.OmopEntry;
 import org.monarchinitiative.omop.data.OmopMapParser;

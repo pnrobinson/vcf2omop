@@ -5,6 +5,9 @@ import org.monarchinitiative.omop.analysis.OmopAnnotatedTranscript;
 import org.monarchinitiative.omop.analysis.OmopAnnotatedVariant;
 import org.monarchinitiative.omop.analysis.Ompopulate;
 import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
+import org.monarchinitiative.omop.stage.Assembly;
+import org.monarchinitiative.omop.stage.OmopStageFileParser;
+import org.monarchinitiative.omop.stage.StagedVariant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -19,12 +22,17 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = "vcf2omop",  mixinStandardHelpOptions = true, description = "extract OMOP-annotated vars from VCF")
 public class Vcf2OmopCommand implements Callable<Integer>  {
     static final Logger logger = LoggerFactory.getLogger(Vcf2OmopCommand.class);
+
+    enum GenomeDatabase {refseq, ensembl}
+
     @CommandLine.Option(names = {"--vcf"}, description ="path to VCF file", required = true)
     private String vcfPath;
-    @CommandLine.Option(names = {"-j", "--jannovar"}, description = "path to Jannovar transcript file")
-    private String jannovarPath=null;
-    @CommandLine.Option(names = {"-a", "--assembly"}, description = "genome assembly (hg19,hg38")
-    private String assembly="GRCh38";
+    @CommandLine.Option(names = {"-s", "--stage"}, description = "path to OMOP stage file", required = true)
+    private String omopStageFilePath;
+    @CommandLine.Option(names = "--database", description = "database: ${COMPLETION-CANDIDATES}")
+    private GenomeDatabase genomeDatabase = GenomeDatabase.ensembl;
+    @CommandLine.Option(names = {"-a", "--assembly"}, description = "genome assembly: ${COMPLETION-CANDIDATES}, default ${DEFAULT_VALUE}")
+    private Assembly assembly=Assembly.GRCh19;
     @CommandLine.Option(names = {"--all"}, description = "Show all affected transcripts (default: ${DEFAULT-VALUE})")
     boolean showAll = false;
     @CommandLine.Option(names = {"-d", "--data"}, description = "location of download directory (default: ${DEFAULT-VALUE})")
@@ -35,17 +43,28 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
 
     private String getJannovarPath() {
         File f;
-        if (jannovarPath != null) {
-            f = new File(jannovarPath); // user specified the path to the Jannovar ser file
-        } else {
-            if (assembly.equalsIgnoreCase("GRCh38") || assembly.equalsIgnoreCase("hg38")) {
-                f = new File(downloadDir + File.separator + "hg38_refseq_curated.ser");
-            } else if (assembly.equalsIgnoreCase("GRCh37") || assembly.equalsIgnoreCase("hg19")) {
-                f = new File(downloadDir + File.separator + "hg19_refseq.ser");
-            } else {
-                throw new Vcf2OmopRuntimeException("Did not recognize assembly: " + assembly
-                + ", valid values include hg19,hg38");
-            }
+        switch (assembly) {
+            case hg19:
+            case GRCh19:
+                if (genomeDatabase.equals(GenomeDatabase.refseq)) {
+                    f =  new File(downloadDir + File.separator + "refseq_curated_105_hg19.ser");
+                } else if (genomeDatabase.equals(GenomeDatabase.ensembl)) {
+                    f =  new File(downloadDir + File.separator + "ensembl_87_hg19.ser");
+                } else {
+                    throw new Vcf2OmopRuntimeException("Could not identify databasae " + genomeDatabase);
+                }
+                break;
+            case hg38:
+            case GRCh38:
+                if (genomeDatabase.equals(GenomeDatabase.refseq)) {
+                    f =  new File(downloadDir + File.separator + "refseq_curated_109_hg38.ser");
+                } else if (genomeDatabase.equals(GenomeDatabase.ensembl)) {
+                    f =  new File(downloadDir + File.separator + "ensembl_91_hg38.ser");
+                } else {
+                    throw new Vcf2OmopRuntimeException("Could not identify databasae " + genomeDatabase);
+                }
+            default:
+                throw new Vcf2OmopRuntimeException("Could not identify assembly " + assembly.toString());
         }
         if (! f.exists()) {
             throw new Vcf2OmopRuntimeException("Could not find Jannovar file at " + f.getAbsolutePath());
@@ -56,7 +75,13 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
     @Override
     public Integer call() {
         logger.debug("Executing vcf2omop");
-        Ompopulate ompopulate = new Ompopulate(getJannovarPath(), vcfPath, assembly, showAll);
+        File f = new File(omopStageFilePath);
+        if (! f.isFile()) {
+            throw new Vcf2OmopRuntimeException("Could not find OMOP stage file at " + f.getAbsolutePath());
+        }
+        OmopStageFileParser omopStageFileParser = new OmopStageFileParser(f);
+        List<StagedVariant> stagedVariantList = omopStageFileParser.getStagedVariantList();
+        Ompopulate ompopulate = new Ompopulate(getJannovarPath(), vcfPath, assembly.name(), stagedVariantList, showAll);
         List<OmopAnnotatedVariant> annotations = ompopulate.getVariantAnnotations();
         dumpToShell(annotations);
         writeToFile(annotations);

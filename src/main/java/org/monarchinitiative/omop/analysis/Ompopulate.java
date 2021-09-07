@@ -17,9 +17,8 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 
-import org.monarchinitiative.omop.data.OmopEntry;
-import org.monarchinitiative.omop.data.OmopMapParser;
 import org.monarchinitiative.omop.data.VcfVariant;
+import org.monarchinitiative.omop.stage.StagedVariant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +58,6 @@ public class Ompopulate {
      */
     private int n_filtered_variants = 0;
 
-    final List<OmopEntry> entries;
-
     /**
      * Number of samples in the VCF file.
      */
@@ -86,14 +83,12 @@ public class Ompopulate {
     /** Must be one of GRCh19 or GRCh38. */
     private final String genomeAssembly;
 
-    public Ompopulate(String jannovarPath, String vcfPath, String assembly, boolean showAll) {
+    public Ompopulate(String jannovarPath, String vcfPath, String assembly, List<StagedVariant> stagedVariantList, boolean showAll) {
         this.genomeAssembly = assembly;
         this.showAllAffectedTranscripts = showAll;
         variant2omopIdMap = new HashMap<>();
-        OmopMapParser parser = new OmopMapParser(genomeAssembly);
-        this.entries = parser.getEntries();
-        for (OmopEntry e : entries) {
-            variant2omopIdMap.put(e.getVariant(), e.getOmopId());
+        for (StagedVariant e : stagedVariantList) {
+            variant2omopIdMap.put(e.toVcfVariant(), e.getOmopId());
         }
         try {
             this.jannovarData = new JannovarDataSerializer(jannovarPath).load();
@@ -156,7 +151,7 @@ public class Ompopulate {
                             this.variantAnnotations.add(new OmopAnnotatedVariant(omopId, genomeAssembly, annoList));
                         }
                     } catch (Exception e) {
-                        System.err.printf("[ERROR] Could not annotate variant %s!\n", vc.toString());
+                        System.err.printf("[ERROR] Could not annotate variant %s!\n", vc);
                         e.printStackTrace(System.err);
                     }
                 }

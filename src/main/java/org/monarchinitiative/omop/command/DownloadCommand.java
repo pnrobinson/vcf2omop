@@ -1,16 +1,11 @@
 package org.monarchinitiative.omop.command;
 
 
-import org.monarchinitiative.omop.io.FileDownloadException;
-import org.monarchinitiative.omop.io.FileDownloader;
-import org.monarchinitiative.omop.io.Vcf2OmopDownloader;
+import org.monarchinitiative.omop.download.Vcf2OmopDownloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.concurrent.Callable;
 
 
