@@ -1,7 +1,5 @@
 package org.monarchinitiative.omop;
 
-
-
 import org.monarchinitiative.omop.command.DownloadCommand;
 import org.monarchinitiative.omop.command.SynonymsCommand;
 import org.monarchinitiative.omop.command.Vcf2OmopCommand;
@@ -9,8 +7,13 @@ import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "vcf2omop", mixinStandardHelpOptions = true, version = "0.2.5",
-        description = "Extract omop-encoded variants")
+/**
+ * @author Peter N Robinson
+ */
+@CommandLine.Command(name = "vcf2omop",
+        mixinStandardHelpOptions = true,
+        version = "0.6.1",
+        description = "Extract OMOP-encoded variants")
 public class Vcf2Omop implements Callable<Integer>  {
 
     public static void main(String[] args) {
@@ -24,10 +27,6 @@ public class Vcf2Omop implements Callable<Integer>  {
         cline.setToggleBooleanFlags(false);
         int exitCode = cline.execute(args);
         System.exit(exitCode);
-
-
-
-
     }
 
     public Vcf2Omop() {

@@ -5,7 +5,6 @@ import de.charite.compbio.jannovar.annotation.VariantAnnotator;
 import de.charite.compbio.jannovar.annotation.builders.AnnotationBuilderOptions;
 import de.charite.compbio.jannovar.data.*;
 import de.charite.compbio.jannovar.htsjdk.VariantContextAnnotator;
-import de.charite.compbio.jannovar.progress.ProgressReporter;
 import htsjdk.tribble.TribbleException;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
@@ -13,11 +12,8 @@ import htsjdk.variant.variantcontext.VariantContextBuilder;
 import htsjdk.variant.variantcontext.writer.Options;
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
 import htsjdk.variant.variantcontext.writer.VariantContextWriterBuilder;
-import htsjdk.variant.vcf.VCFFileReader;
-import htsjdk.variant.vcf.VCFFilterHeaderLine;
-import htsjdk.variant.vcf.VCFHeader;
+import htsjdk.variant.vcf.*;
 
-import htsjdk.variant.vcf.VCFHeaderVersion;
 import org.monarchinitiative.omop.data.VcfVariant;
 import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
 import org.monarchinitiative.omop.stage.OmopStagedVariant;
@@ -35,8 +31,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 
-public class Ompopulate {
-    private final static Logger logger = LoggerFactory.getLogger(Ompopulate.class);
+public class Omopulator {
+    private final static Logger logger = LoggerFactory.getLogger(Omopulator.class);
     private final JannovarData jannovarData;
 
     private final String vcfFilePath;
@@ -48,11 +44,9 @@ public class Ompopulate {
     private final VariantContextAnnotator variantEffectAnnotator;
 
     private static final String OMOP_FLAG_FIELD_NAME = "OMOP";
-    private static final VCFFilterHeaderLine OMOP_FLAG_LINE = new VCFFilterHeaderLine(OMOP_FLAG_FIELD_NAME,
-            "OMOP genomics concept ID");
+
     private static final String JANNOVAR_FLAG_FIELD_NAME = "ANN";
-    private static final VCFFilterHeaderLine JANNOVAR_FLAG_LINE = new VCFFilterHeaderLine(JANNOVAR_FLAG_FIELD_NAME,
-            "Jannovar annotation");
+
 
 
     /**
@@ -62,7 +56,7 @@ public class Ompopulate {
      * @param assembly Must be one of GRCh19 or GRCh38
      * @param stagedVariantList variants contained in the OMOP list
      */
-    public Ompopulate(String jannovarPath, String vcfPath, String assembly, List<OmopStagedVariant> stagedVariantList) {
+    public Omopulator(String jannovarPath, String vcfPath, String assembly, List<OmopStagedVariant> stagedVariantList) {
         variant2omopIdMap = new HashMap<>();
         for (OmopStagedVariant e : stagedVariantList) {
             variant2omopIdMap.put(e.toVcfVariant(), e.getOmopId());
@@ -91,27 +85,7 @@ public class Ompopulate {
         this.variantEffectAnnotator =
                 new VariantContextAnnotator(refDict, chromosomeMap,
                         new VariantContextAnnotator.Options());
-        VariantAnnotator annotator = new VariantAnnotator(refDict, chromosomeMap, new AnnotationBuilderOptions());
-
     }
-
-    /**
-     * It is not reliable to get the VCF version from HTSJDK --
-     * vcfHeader.getVCFHeaderVersion().getVersionString() can give a NP and there is no other accessor.
-     * It is easier to read the first line of the VCF file separately.
-     * @param f
-     * @return
-     */
-    public String getVcfVersionString(File f) throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(f));
-        String versionLine = br.readLine();
-        if (versionLine != null && versionLine.startsWith("##")) {
-            return versionLine;
-        } else {
-            throw new Vcf2OmopRuntimeException("Could not extract first line from " + f.getAbsolutePath());
-        }
-    }
-
 
     /**
      * Input -- a VariantContext object.
@@ -181,6 +155,14 @@ public class Ompopulate {
             header = new VCFHeader();
             header.setVCFHeaderVersion(VCFHeaderVersion.VCF4_2);
         }
+        VCFHeaderLineType omopHeaderLineType = VCFHeaderLineType.Integer;
+        int omopHeaderLineCount = 1; // The Number entry is an Integer
+        //that describes the number of values that can be included with the INFO field. For example, if the INFO field contains
+        //a single number, then this value should be 1
+        VCFInfoHeaderLine OMOP_FLAG_LINE = new VCFInfoHeaderLine(OMOP_FLAG_FIELD_NAME, omopHeaderLineCount, omopHeaderLineType, "OMOP concept id");
+        VCFHeaderLineType jannovarHeaderLineType = VCFHeaderLineType.String;
+        VCFHeaderLineCount jannovarHeaderLineCOunt = VCFHeaderLineCount.R; // one per allele
+        VCFInfoHeaderLine JANNOVAR_FLAG_LINE = new VCFInfoHeaderLine(JANNOVAR_FLAG_FIELD_NAME, jannovarHeaderLineCOunt, jannovarHeaderLineType, "Jannovar annotation");
         // OMOP-Genomics - flag
         header.addMetaDataLine(OMOP_FLAG_LINE);
         header.addMetaDataLine(JANNOVAR_FLAG_LINE);

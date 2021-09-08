@@ -15,11 +15,10 @@ import java.util.concurrent.Callable;
  * @author <a href="mailto:peter.robinson@jax.org">Peter Robinson</a>
  */
 @CommandLine.Command(name = "download",  mixinStandardHelpOptions = true, description = "Download files")
-public class DownloadCommand implements Callable<Integer> {
+public class DownloadCommand extends Command implements Callable<Integer> {
     static final Logger logger = LoggerFactory.getLogger(DownloadCommand.class);
 
-    @CommandLine.Option(names = {"-d", "--data"}, description = "location of download directory (default: ${DEFAULT-VALUE})")
-    private String downloadDir = "data";
+
 
     @Override
     public Integer call()  {

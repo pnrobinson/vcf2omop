@@ -29,13 +29,13 @@ public class OmopStageFileParserTest {
 
     @Test
     void if_nine_entries_parsed_then_ok() {
-        List<StagedVariant> variants = parser.getStagedVariantList();
+        List<OmopStagedVariant> variants = parser.getStagedVariantList();
         assertEquals(9, variants.size());
     }
 
     @Test
     void if_all_variants_are_hg19_then_ok() {
-        for (StagedVariant var : parser.getStagedVariantList()) {
+        for (OmopStagedVariant var : parser.getStagedVariantList()) {
             assertEquals(Assembly.GRCh19, var.getAssembly());
         }
     }
