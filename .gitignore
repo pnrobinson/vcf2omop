@@ -26,7 +26,6 @@ hs_err_pid*
 
 target/**
 
-.oncembobulator.iml
 /data/
 /vcf2omop.tsv
 /synonyms-vcf2omop-GRCh38.tsv
