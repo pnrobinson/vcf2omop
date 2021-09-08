@@ -33,8 +33,6 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
     private GenomeDatabase genomeDatabase = GenomeDatabase.ensembl;
     @CommandLine.Option(names = {"-a", "--assembly"}, description = "genome assembly: ${COMPLETION-CANDIDATES}, default ${DEFAULT_VALUE}")
     private Assembly assembly=Assembly.GRCh19;
-    @CommandLine.Option(names = {"--all"}, description = "Show all affected transcripts (default: ${DEFAULT-VALUE})")
-    boolean showAll = false;
     @CommandLine.Option(names = {"-d", "--data"}, description = "location of download directory (default: ${DEFAULT-VALUE})")
     private String downloadDir = "data";
     @CommandLine.Option(names = {"-p", "--prefix"}, description = "Outfile prefix")
@@ -81,7 +79,7 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
         }
         OmopStageFileParser omopStageFileParser = new OmopStageFileParser(f);
         List<OmopStagedVariant> stagedVariantList = omopStageFileParser.getStagedVariantList();
-        Ompopulate ompopulate = new Ompopulate(getJannovarPath(), vcfPath, assembly.name(), stagedVariantList, showAll);
+        Ompopulate ompopulate = new Ompopulate(getJannovarPath(), vcfPath, assembly.name(), stagedVariantList);
         File vcfFile = new File(vcfPath);
         if (!vcfFile.isFile()) {
             throw new Vcf2OmopRuntimeException("Could not find VCF file at " + vcfFile.getAbsolutePath());
@@ -90,9 +88,6 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
         String outname = prefix + "-" + basename;
         File outfile = new File(outname);
         ompopulate.annotateVcf(outfile);
-        List<OmopAnnotatedVariant> annotations = ompopulate.getVariantAnnotations();
-        dumpToShell(annotations);
-        writeToFile(annotations);
         return 0;
     }
 
@@ -105,12 +100,8 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
             System.out.println("[INFO] No annotations found");
         }
         for (OmopAnnotatedVariant ovar : annotations) {
-            if (showAll) {
-                for (OmopAnnotatedTranscript otran : ovar.getTranscriptAnnotations()) {
-                    System.out.println(otran.getTsvLine());
-                }
-            } else {
-                System.out.println(ovar.getHighestImpactAnnotation().getTsvLine());
+            for (OmopAnnotatedTranscript otran : ovar.getTranscriptAnnotations()) {
+                System.out.println(otran.getTsvLine());
             }
         }
     }
@@ -121,17 +112,10 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
      */
     public void writeToFile(List<OmopAnnotatedVariant> annotations) {
         String fname = String.format("%s.tsv", this.prefix);
-        if (showAll) {
-            fname = String.format("%s-all.tsv", this.prefix);
-        }
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fname))) {
             for (OmopAnnotatedVariant ovar : annotations) {
-                if (showAll) {
-                    for (OmopAnnotatedTranscript otran : ovar.getTranscriptAnnotations()) {
-                        writer.write(otran.getTsvLine() + "\n");
-                    }
-                } else {
-                    writer.write(ovar.getHighestImpactAnnotation().getTsvLine() + "\n");
+                for (OmopAnnotatedTranscript otran : ovar.getTranscriptAnnotations()) {
+                    writer.write(otran.getTsvLine() + "\n");
                 }
             }
         } catch (IOException e) {

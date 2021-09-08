@@ -1,18 +1,11 @@
 package org.monarchinitiative.omop.analysis;
 
 import com.google.common.collect.ImmutableMap;
-import de.charite.compbio.jannovar.annotation.Annotation;
-import de.charite.compbio.jannovar.annotation.VariantAnnotations;
 import de.charite.compbio.jannovar.annotation.VariantAnnotator;
 import de.charite.compbio.jannovar.annotation.builders.AnnotationBuilderOptions;
 import de.charite.compbio.jannovar.data.*;
 import de.charite.compbio.jannovar.htsjdk.VariantContextAnnotator;
 import de.charite.compbio.jannovar.progress.ProgressReporter;
-import de.charite.compbio.jannovar.reference.GenomePosition;
-import de.charite.compbio.jannovar.reference.GenomeVariant;
-import de.charite.compbio.jannovar.reference.PositionType;
-import de.charite.compbio.jannovar.reference.Strand;
-import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.tribble.TribbleException;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
@@ -28,7 +21,6 @@ import htsjdk.variant.vcf.VCFHeaderVersion;
 import org.monarchinitiative.omop.data.VcfVariant;
 import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
 import org.monarchinitiative.omop.stage.OmopStagedVariant;
-import org.monarchinitiative.omop.vcf.VcfWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,64 +38,31 @@ import java.util.stream.Stream;
 public class Ompopulate {
     private final static Logger logger = LoggerFactory.getLogger(Ompopulate.class);
     private final JannovarData jannovarData;
-    /**
-     * Reference dictionary that is part of {@link #jannovarData}.
-     */
-    private final ReferenceDictionary refDict;
-    /**
-     * Map of Chromosomes, used in the annotation.
-     */
-    private final ImmutableMap<Integer, Chromosome> chromosomeMap;
-    /**
-     * A Jannovar object to report progress of VCF parsing.
-     */
-    private ProgressReporter progressReporter = null;
+
     private final String vcfFilePath;
-
-    //GenomeAssembly genomeAssembly = GenomeA
-    /**
-     * Number of variants that were not filtered.
-     */
-    private int n_good_quality_variants = 0;
-    /**
-     * Number of variants that were removed because of the quality filter.
-     */
-    private int n_filtered_variants = 0;
-
-    /**
-     * Number of samples in the VCF file.
-     */
-    private int n_samples;
-    /**
-     * Name of the proband in the VCF file.
-     */
-    private String samplename;
-    /**
-     * List of all names in the VCF file
-     */
-    private List<String> samplenames;
 
     private final List<OmopAnnotatedVariant> variantAnnotations;
 
     private final Map<VcfVariant, Integer> variant2omopIdMap;
 
-    private  final VariantAnnotator annotator;
-
     private final VariantContextAnnotator variantEffectAnnotator;
 
-    private final boolean showAllAffectedTranscripts;
-
-    private static final String OMOP_FLAG_FIELD_NAME = "OMOP-Genomics";
+    private static final String OMOP_FLAG_FIELD_NAME = "OMOP";
     private static final VCFFilterHeaderLine OMOP_FLAG_LINE = new VCFFilterHeaderLine(OMOP_FLAG_FIELD_NAME,
             "OMOP genomics concept ID");
+    private static final String JANNOVAR_FLAG_FIELD_NAME = "ANN";
+    private static final VCFFilterHeaderLine JANNOVAR_FLAG_LINE = new VCFFilterHeaderLine(JANNOVAR_FLAG_FIELD_NAME,
+            "Jannovar annotation");
 
 
-    /** Must be one of GRCh19 or GRCh38. */
-    private final String genomeAssembly;
-
-    public Ompopulate(String jannovarPath, String vcfPath, String assembly, List<OmopStagedVariant> stagedVariantList, boolean showAll) {
-        this.genomeAssembly = assembly;
-        this.showAllAffectedTranscripts = showAll;
+    /**
+     *
+     * @param jannovarPath Path to Jannovar transcript file (use download command to get them in the data subdirectory)
+     * @param vcfPath path to input VCF file
+     * @param assembly Must be one of GRCh19 or GRCh38
+     * @param stagedVariantList variants contained in the OMOP list
+     */
+    public Ompopulate(String jannovarPath, String vcfPath, String assembly, List<OmopStagedVariant> stagedVariantList) {
         variant2omopIdMap = new HashMap<>();
         for (OmopStagedVariant e : stagedVariantList) {
             variant2omopIdMap.put(e.toVcfVariant(), e.getOmopId());
@@ -119,14 +78,20 @@ public class Ompopulate {
         if (!f.exists()) {
             throw new RuntimeException("Could not find VCF file at " + vcfPath);
         }
-        this.refDict = jannovarData.getRefDict();
-        this.chromosomeMap = jannovarData.getChromosomes();
+        /**
+         * Reference dictionary that is part of {@link #jannovarData}.
+         */
+        ReferenceDictionary refDict = jannovarData.getRefDict();
+        /**
+         * Map of Chromosomes, used in the annotation.
+         */
+        ImmutableMap<Integer, Chromosome> chromosomeMap = jannovarData.getChromosomes();
         this.vcfFilePath = f.getAbsolutePath();
         this.variantAnnotations = new ArrayList<>();
         this.variantEffectAnnotator =
-                new VariantContextAnnotator(this.refDict, this.chromosomeMap,
+                new VariantContextAnnotator(refDict, chromosomeMap,
                         new VariantContextAnnotator.Options());
-        this.annotator = new VariantAnnotator(this.refDict, chromosomeMap, new AnnotationBuilderOptions());
+        VariantAnnotator annotator = new VariantAnnotator(refDict, chromosomeMap, new AnnotationBuilderOptions());
 
     }
 
@@ -181,7 +146,7 @@ public class Ompopulate {
      * Add OMOP annotations to matching variants in a VCF file by adding corresponding annotations to the
      * INFO field for corresponding variants and outputing the rest of the original VCF file unchanged.
      */
-    public void annotateVcf(File outFileName) throws IOException {
+    public void annotateVcf(File outFileName) {
         final long startTime = System.nanoTime();
         logger.info("Parsing VCF: " + this.vcfFilePath);
         File vcfFile = new File(this.vcfFilePath); // input file
@@ -197,7 +162,7 @@ public class Ompopulate {
             variants.forEach(vcfWriter::add);
         }
         final long endTime = System.nanoTime();
-        logger.info("[INFO] Processing completed in %.2f seconds.\n", (1e-9 * (endTime - startTime)));
+        logger.info("[INFO] Processing completed in {} seconds.\n", (1e-9 * (endTime - startTime)));
     }
 
 
@@ -218,6 +183,7 @@ public class Ompopulate {
         }
         // OMOP-Genomics - flag
         header.addMetaDataLine(OMOP_FLAG_LINE);
+        header.addMetaDataLine(JANNOVAR_FLAG_LINE);
         return header;
     }
 

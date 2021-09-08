@@ -33,7 +33,7 @@ public class Vcf2Omop implements Callable<Integer>  {
     public Vcf2Omop() {
     }
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
         // work done in subcommands
         return 0;
     }
