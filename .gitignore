@@ -33,3 +33,4 @@ target/**
 /vcf2omop.iml
 /synonyms-vcf2omop-GRCh38.tsv
 /synonyms-vcf2omop-hg19.tsv
+/vcf2omop-sample-hg19.vcf

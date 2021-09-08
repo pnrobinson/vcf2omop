@@ -10,10 +10,12 @@ import de.charite.compbio.jannovar.reference.GenomePosition;
 import de.charite.compbio.jannovar.reference.GenomeVariant;
 import de.charite.compbio.jannovar.reference.PositionType;
 import de.charite.compbio.jannovar.reference.Strand;
-import org.monarchinitiative.omop.analysis.Ompopulate;
+import org.monarchinitiative.omop.analysis.Omopulator;
 import org.monarchinitiative.omop.data.OmopEntry;
 import org.monarchinitiative.omop.data.OmopMapParser;
 import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
+import org.monarchinitiative.omop.stage.OmopStageFileParser;
+import org.monarchinitiative.omop.stage.OmopStagedVariant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -30,18 +32,11 @@ import java.util.concurrent.Callable;
  * Generate table with all transcript-annotations linked to a given chromosomal change in the OMOP table
  */
 @CommandLine.Command(name = "synonyms", mixinStandardHelpOptions = true, description = "Generate table with all transcript \"synonyms\"")
-public class SynonymsCommand implements Callable<Integer> {
-    @CommandLine.Option(names = {"-j", "--jannovar"}, description = "path to Jannovar transcript file")
-    private String jannovarPath = null;
-    @CommandLine.Option(names = {"-a", "--assembly"}, description = "genome assembly (hg19,hg38")
-    private String assembly = "GRCh38";
-    @CommandLine.Option(names = {"-d", "--data"}, description = "location of download directory (default: ${DEFAULT-VALUE})")
-    private String downloadDir = "data";
+public class SynonymsCommand extends GenomicDataCommand implements Callable<Integer> {
     @CommandLine.Option(names = {"-p", "--prefix"}, description = "Outfile prefix")
     String prefix = "vcf2omop";
 
-
-    private final static Logger logger = LoggerFactory.getLogger(Ompopulate.class);
+    private final static Logger logger = LoggerFactory.getLogger(Omopulator.class);
     private JannovarData jannovarData;
     private List<OmopEntry> entries;
     /**
@@ -56,21 +51,6 @@ public class SynonymsCommand implements Callable<Integer> {
     public SynonymsCommand() {
     }
 
-    private void initJannovar() {
-        if (assembly.equalsIgnoreCase("GRCh38")) {
-            jannovarPath = "data/hg38_refseq_curated.ser";
-        } else if (assembly.equalsIgnoreCase("hg19") || assembly.equalsIgnoreCase("GRCh37")) {
-            jannovarPath = "data/hg19_refseq.ser";
-        }
-        try {
-            this.jannovarData = new JannovarDataSerializer(jannovarPath).load();
-        } catch (SerializationException se) {
-            throw new RuntimeException(se.getMessage());
-        }
-        this.refDict = jannovarData.getRefDict();
-        this.chromosomeMap = jannovarData.getChromosomes();
-
-    }
 
     private final static String[] header = {"omop.id", "chrom", "pos", "ref", "alt", "gene.symbol", "hgvs.genomic", "hgvs.transcript", "hgvs.protein"};
 
@@ -78,29 +58,25 @@ public class SynonymsCommand implements Callable<Integer> {
     @Override
     public Integer call() {
         String outname = String.format("synonyms-%s-%s.tsv", this.prefix, this.assembly);
-        initJannovar();
-        OmopMapParser parser = new OmopMapParser(assembly);
-        this.entries = parser.getEntries();
-        File f;
-        if (jannovarPath != null) {
-            f = new File(jannovarPath); // user specified the path to the Jannovar ser file
-        } else {
-            if (assembly.equalsIgnoreCase("GRCh38") || assembly.equalsIgnoreCase("hg38")) {
-                f = new File(downloadDir + File.separator + "hg38_refseq_curated.ser");
-            } else if (assembly.equalsIgnoreCase("GRCh37") || assembly.equalsIgnoreCase("hg19")) {
-                f = new File(downloadDir + File.separator + "hg_refseq.ser");
-            } else {
-                throw new Vcf2OmopRuntimeException("Did not recognize assembly: " + assembly
-                        + ", valid values include hg19,hg38");
-            }
+        String jannovarPath = getJannovarPath();
+        try {
+            this.jannovarData = new JannovarDataSerializer(jannovarPath).load();
+            this.refDict = jannovarData.getRefDict();
+        } catch (SerializationException se) {
+            throw new Vcf2OmopRuntimeException(se.getMessage());
         }
+        //OmopMapParser parser = new OmopMapParser(assembly);
+        List<OmopStagedVariant> stagedVariantList = stagedVariantList(omopStageFilePath);
+
+        File f;
+
         final VariantAnnotator annotator = new VariantAnnotator(this.refDict, chromosomeMap, new AnnotationBuilderOptions());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outname))) {
             writer.write(String.join("\t", header) + "\n");
-            for (OmopEntry entry : this.entries) {
-                String chrom = entry.getChromosome();
+            for (OmopStagedVariant entry : stagedVariantList) {
+                String chrom = entry.chromToString();
                 int omopId = entry.getOmopId();
-                int pos = entry.getPosition();
+                int pos = entry.getPos();
                 String ref = entry.getRef();
                 String alt = entry.getAlt();
                 int chr = jannovarData.getRefDict().getContigNameToID().get(chrom);
@@ -136,8 +112,6 @@ public class SynonymsCommand implements Callable<Integer> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
         return 0;
     }
 

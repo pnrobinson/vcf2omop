@@ -25,9 +25,8 @@ Commands:
 
 
 The tool uses a transcript data file from the [Jannovar project](https://github.com/charite/jannovar). It is possible
-to build data files for RefSeq curated or Ensembl and pass them to this app with the ``-j`` flag.
-Before using the app for analysis, run the download command to  download Jannovar transcript definition
-files for hg19 and hg38.
+to build data files for RefSeq curated or Ensembl. Before using the app for analysis, run the download command to  download Jannovar transcript definition
+files for hg19 and hg38. 
 
 ```
 $ java -jar target/vcf2omop.jar download
@@ -36,13 +35,17 @@ $ java -jar target/vcf2omop.jar download
 
 To download fresh versions of these files, either delete the ``data`` subdirectory or pass the ``--overwrite`` flag.
 
-## To run the app
+## Annotate VCF files with OMOP concept ids: vcf2omop
 After setting up the app as above, all you need is a VCF file and a path to the OMOP staging file (represented as ``stage_genomic.csv`` in the following command).
-Currently, this file supports only hg19 VCF files.
 
 ```
 $ java -jar target/vcf2omop.jar vcf2omop --stage <path/to/stage_genomic.csv> --vcf <path/to/vcf>
 ```
+There are several options that can be seen with the -h flag.
+
+
+
+
 
 ## To generate synonyms
 This new feature generates a table of 'synoynms'.

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.monarchinitiative</groupId>
     <artifactId>vcf2omop</artifactId>
-    <version>0.5.1</version>
+    <version>0.6.1</version>
     <packaging>jar</packaging>
 
     <name>vcf2omop</name>
