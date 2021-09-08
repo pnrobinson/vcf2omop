@@ -21,16 +21,13 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-**/.idea/workspace.xml
-**/.idea/tasks.xml
-**/.idea/libraries/*.xml
-**/.idea/*.xml
+.idea/
+*.iml
+
 target/**
-.idea
-.oncembobulator.iml
+
 /data/
 /vcf2omop.tsv
-/vcf2omop.iml
 /synonyms-vcf2omop-GRCh38.tsv
 /synonyms-vcf2omop-hg19.tsv
 /vcf2omop-sample-hg19.vcf
