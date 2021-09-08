@@ -28,14 +28,15 @@ public class Vcf2OmopCommand extends GenomicDataCommand implements Callable<Inte
     @CommandLine.Option(names = {"--vcf"}, description ="path to VCF file", required = true)
     private String vcfPath;
     @CommandLine.Option(names = {"-p", "--prefix"}, description = "Outfile prefix")
-    String prefix = "vcf2omop";
-
+    private String prefix = "vcf2omop";
+    @CommandLine.Option(names={"--annot"}, description = "add transcript annotations via Jannovar")
+    private boolean transcriptAnnotations = false;
 
     @Override
     public Integer call() throws IOException {
         logger.debug("Executing vcf2omop");
         List<OmopStagedVariant> stagedVariantList = stagedVariantList(omopStageFilePath);
-        Omopulator ompopulate = new Omopulator(getJannovarPath(), vcfPath, assembly.name(), stagedVariantList);
+        Omopulator ompopulate = new Omopulator(getJannovarPath(), vcfPath, assembly.name(), stagedVariantList, transcriptAnnotations);
         File vcfFile = new File(vcfPath);
         if (!vcfFile.isFile()) {
             throw new Vcf2OmopRuntimeException("Could not find VCF file at " + vcfFile.getAbsolutePath());

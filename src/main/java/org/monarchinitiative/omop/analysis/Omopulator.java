@@ -47,17 +47,19 @@ public class Omopulator {
 
     private static final String JANNOVAR_FLAG_FIELD_NAME = "ANN";
 
+    private final boolean transcriptAnnotations;
 
 
     /**
-     *
-     * @param jannovarPath Path to Jannovar transcript file (use download command to get them in the data subdirectory)
+     *  @param jannovarPath Path to Jannovar transcript file (use download command to get them in the data subdirectory)
      * @param vcfPath path to input VCF file
      * @param assembly Must be one of GRCh19 or GRCh38
      * @param stagedVariantList variants contained in the OMOP list
+     * @param annotations if true, add Jannovar annotations to output VCF file
      */
-    public Omopulator(String jannovarPath, String vcfPath, String assembly, List<OmopStagedVariant> stagedVariantList) {
+    public Omopulator(String jannovarPath, String vcfPath, String assembly, List<OmopStagedVariant> stagedVariantList, boolean annotations) {
         variant2omopIdMap = new HashMap<>();
+        this.transcriptAnnotations = annotations;
         for (OmopStagedVariant e : stagedVariantList) {
             variant2omopIdMap.put(e.toVcfVariant(), e.getOmopId());
         }
@@ -97,7 +99,9 @@ public class Omopulator {
     private Function<VariantContext, VariantContext> addInfoFields() {
         return vc -> {
             // first do Jannovar annotations
-            vc = variantEffectAnnotator.annotateVariantContext(vc);
+            if (transcriptAnnotations) {
+                vc = variantEffectAnnotator.annotateVariantContext(vc);
+            }
             VariantContextBuilder builder = new VariantContextBuilder(vc);
             // now look for OMOP matches
             String contig = vc.getContig();
