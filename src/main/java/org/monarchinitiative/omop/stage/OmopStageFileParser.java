@@ -11,7 +11,7 @@ import java.util.List;
 
 public class OmopStageFileParser {
 
-    private final List<StagedVariant> stagedVariantList;
+    private final List<OmopStagedVariant> stagedVariantList;
 
     public OmopStageFileParser(File f) {
         stagedVariantList = new ArrayList<>();
@@ -22,8 +22,8 @@ public class OmopStageFileParser {
                         +") of stage file (we were expecting the first line to start with concept_id).");
             }
             while ((line = br.readLine()) != null) {
-                System.out.println(line);
-                StagedVariant var = StagedVariant.fromLine(line);
+                //System.out.println(line);
+                OmopStagedVariant var = OmopStagedVariant.fromLine(line);
                 stagedVariantList.add(var);
             }
         } catch (IOException e) {
@@ -31,7 +31,7 @@ public class OmopStageFileParser {
         }
     }
 
-    public List<StagedVariant> getStagedVariantList() {
+    public List<OmopStagedVariant> getStagedVariantList() {
         return stagedVariantList;
     }
 }

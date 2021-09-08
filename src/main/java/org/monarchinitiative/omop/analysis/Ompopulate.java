@@ -1,6 +1,7 @@
 package org.monarchinitiative.omop.analysis;
 
 import com.google.common.collect.ImmutableMap;
+import de.charite.compbio.jannovar.annotation.Annotation;
 import de.charite.compbio.jannovar.annotation.VariantAnnotations;
 import de.charite.compbio.jannovar.annotation.VariantAnnotator;
 import de.charite.compbio.jannovar.annotation.builders.AnnotationBuilderOptions;
@@ -12,23 +13,34 @@ import de.charite.compbio.jannovar.reference.GenomeVariant;
 import de.charite.compbio.jannovar.reference.PositionType;
 import de.charite.compbio.jannovar.reference.Strand;
 import htsjdk.samtools.util.CloseableIterator;
+import htsjdk.tribble.TribbleException;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.variantcontext.VariantContextBuilder;
+import htsjdk.variant.variantcontext.writer.Options;
+import htsjdk.variant.variantcontext.writer.VariantContextWriter;
+import htsjdk.variant.variantcontext.writer.VariantContextWriterBuilder;
 import htsjdk.variant.vcf.VCFFileReader;
+import htsjdk.variant.vcf.VCFFilterHeaderLine;
 import htsjdk.variant.vcf.VCFHeader;
 
+import htsjdk.variant.vcf.VCFHeaderVersion;
 import org.monarchinitiative.omop.data.VcfVariant;
-import org.monarchinitiative.omop.stage.StagedVariant;
+import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
+import org.monarchinitiative.omop.stage.OmopStagedVariant;
+import org.monarchinitiative.omop.vcf.VcfWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-
-import java.io.File;
+import java.io.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 
 public class Ompopulate {
@@ -75,19 +87,25 @@ public class Ompopulate {
 
     private final Map<VcfVariant, Integer> variant2omopIdMap;
 
+    private  final VariantAnnotator annotator;
+
+    private final VariantContextAnnotator variantEffectAnnotator;
+
     private final boolean showAllAffectedTranscripts;
 
-
+    private static final String OMOP_FLAG_FIELD_NAME = "OMOP-Genomics";
+    private static final VCFFilterHeaderLine OMOP_FLAG_LINE = new VCFFilterHeaderLine(OMOP_FLAG_FIELD_NAME,
+            "OMOP genomics concept ID");
 
 
     /** Must be one of GRCh19 or GRCh38. */
     private final String genomeAssembly;
 
-    public Ompopulate(String jannovarPath, String vcfPath, String assembly, List<StagedVariant> stagedVariantList, boolean showAll) {
+    public Ompopulate(String jannovarPath, String vcfPath, String assembly, List<OmopStagedVariant> stagedVariantList, boolean showAll) {
         this.genomeAssembly = assembly;
         this.showAllAffectedTranscripts = showAll;
         variant2omopIdMap = new HashMap<>();
-        for (StagedVariant e : stagedVariantList) {
+        for (OmopStagedVariant e : stagedVariantList) {
             variant2omopIdMap.put(e.toVcfVariant(), e.getOmopId());
         }
         try {
@@ -105,61 +123,102 @@ public class Ompopulate {
         this.chromosomeMap = jannovarData.getChromosomes();
         this.vcfFilePath = f.getAbsolutePath();
         this.variantAnnotations = new ArrayList<>();
-        parseVcf();
+        this.variantEffectAnnotator =
+                new VariantContextAnnotator(this.refDict, this.chromosomeMap,
+                        new VariantContextAnnotator.Options());
+        this.annotator = new VariantAnnotator(this.refDict, chromosomeMap, new AnnotationBuilderOptions());
+
+    }
+
+    /**
+     * It is not reliable to get the VCF version from HTSJDK --
+     * vcfHeader.getVCFHeaderVersion().getVersionString() can give a NP and there is no other accessor.
+     * It is easier to read the first line of the VCF file separately.
+     * @param f
+     * @return
+     */
+    public String getVcfVersionString(File f) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(f));
+        String versionLine = br.readLine();
+        if (versionLine != null && versionLine.startsWith("##")) {
+            return versionLine;
+        } else {
+            throw new Vcf2OmopRuntimeException("Could not extract first line from " + f.getAbsolutePath());
+        }
     }
 
 
-
-    private void parseVcf() {
-        final long startTime = System.nanoTime();
-        System.out.println("[INFO] VCF: " + this.vcfFilePath);
-        try (VCFFileReader vcfReader = new VCFFileReader(new File(this.vcfFilePath), false)) {
-            //final SAMSequenceDictionary seqDict = VCFFileReader.getSequenceDictionary(new File(getOptionalVcfPath));
-            VCFHeader vcfHeader = vcfReader.getFileHeader();
-            this.samplenames = vcfHeader.getSampleNamesInOrder();
-            this.n_samples = samplenames.size();
-            this.samplename = samplenames.get(0);
-            logger.trace("Annotating VCF at " + this.vcfFilePath + " for sample " + this.samplename);
-            CloseableIterator<VariantContext> iter = vcfReader.iterator();
-            VariantContextAnnotator variantEffectAnnotator =
-                    new VariantContextAnnotator(this.refDict, this.chromosomeMap,
-                            new VariantContextAnnotator.Options());
-            final VariantAnnotator annotator = new VariantAnnotator(this.refDict, chromosomeMap, new AnnotationBuilderOptions());
-            while (iter.hasNext()) {
-                VariantContext vc = iter.next();
-                if (vc.isFiltered()) {
-                    // this is a failing VariantContext
-                    n_filtered_variants++;
-                    continue;
-                } else {
-                    n_good_quality_variants++;
-                }
-                vc = variantEffectAnnotator.annotateVariantContext(vc);
-                List<Allele> altAlleles = vc.getAlternateAlleles();
-                String contig = vc.getContig();
-                int start = vc.getStart();
-                String ref = vc.getReference().getBaseString();
-                for (Allele allele : altAlleles) {
-                    String alt = allele.getBaseString();
-                    int chr = jannovarData.getRefDict().getContigNameToID().get(contig);
-                    GenomeVariant genomeChange = new GenomeVariant(new GenomePosition(this.refDict, Strand.FWD, chr, start, PositionType.ONE_BASED), ref, alt);
-                    try {
-                        VariantAnnotations annoList = annotator.buildAnnotations(genomeChange);
-                        VcfVariant candidate = new VcfVariant(contig, start, ref, alt);
-                        if (this.variant2omopIdMap.containsKey(candidate)) {
-                            int omopId = variant2omopIdMap.get(candidate);
-                            this.variantAnnotations.add(new OmopAnnotatedVariant(omopId, genomeAssembly, annoList));
-                        }
-                    } catch (Exception e) {
-                        System.err.printf("[ERROR] Could not annotate variant %s!\n", vc);
-                        e.printStackTrace(System.err);
-                    }
+    /**
+     * Input -- a VariantContext object.
+     * We check if the corresponding variant is in our OMOP list
+     * If so, we add the concept id abd return the same VariantContext
+     *
+     * @return variant context (OMOP info added to INFO if applicable)
+     */
+    private Function<VariantContext, VariantContext> addInfoFields() {
+        return vc -> {
+            // first do Jannovar annotations
+            vc = variantEffectAnnotator.annotateVariantContext(vc);
+            VariantContextBuilder builder = new VariantContextBuilder(vc);
+            // now look for OMOP matches
+            String contig = vc.getContig();
+            int start = vc.getStart();
+            String ref = vc.getReference().getBaseString();
+            for (Allele allele : vc.getAlternateAlleles()) {
+                String alt = allele.getBaseString();
+                VcfVariant variant = new VcfVariant(contig, start, ref, alt);
+                if (this.variant2omopIdMap.containsKey(variant)) {
+                    int omopId = variant2omopIdMap.get(variant);
+                    builder.attribute(OMOP_FLAG_FIELD_NAME, String.valueOf(omopId));
                 }
             }
+            return builder.make();
+        };
+    }
+
+
+    /**
+     * Add OMOP annotations to matching variants in a VCF file by adding corresponding annotations to the
+     * INFO field for corresponding variants and outputing the rest of the original VCF file unchanged.
+     */
+    public void annotateVcf(File outFileName) throws IOException {
+        final long startTime = System.nanoTime();
+        logger.info("Parsing VCF: " + this.vcfFilePath);
+        File vcfFile = new File(this.vcfFilePath); // input file
+        try (VCFFileReader vcfReader = new VCFFileReader(vcfFile, false)) {
+            VCFHeader vcfHeader = prepareVcfHeader(vcfFile.toPath());
+            VariantContextWriter vcfWriter = new VariantContextWriterBuilder().setOutputFile(outFileName)
+                    .setReferenceDictionary(vcfReader.getFileHeader().getSequenceDictionary())
+                    .unsetOption(Options.INDEX_ON_THE_FLY)
+                    .build();
+            vcfWriter.writeHeader(vcfHeader);
+            Stream<VariantContext> variants = vcfReader.iterator().stream()
+                    .map(addInfoFields());
+            variants.forEach(vcfWriter::add);
         }
-        System.out.printf("[INFO] VCF had a total of %d variants. %d low-quality variants were filtered out.\n", n_good_quality_variants, n_filtered_variants);
         final long endTime = System.nanoTime();
-        System.out.printf("[INFO] Processing completed in %.2f seconds.\n", (1e-9*(endTime-startTime)));
+        logger.info("[INFO] Processing completed in %.2f seconds.\n", (1e-9 * (endTime - startTime)));
+    }
+
+
+    /**
+     * Extend the <code>header</code> with INFO fields that are being added in this command.
+     *
+     * @return the extended header
+     */
+    private VCFHeader prepareVcfHeader(Path inputVcfPath) {
+        VCFHeader header;
+        try (VCFFileReader reader = new VCFFileReader(inputVcfPath, false)) {
+            header = reader.getFileHeader();
+        } catch (TribbleException.MalformedFeatureFile e) {
+            // happens when the input variants were not read from a VCF file but from e.g. a CSV file
+            logger.info("Creating a stub VCF header");
+            header = new VCFHeader();
+            header.setVCFHeaderVersion(VCFHeaderVersion.VCF4_2);
+        }
+        // OMOP-Genomics - flag
+        header.addMetaDataLine(OMOP_FLAG_LINE);
+        return header;
     }
 
     public List<OmopAnnotatedVariant> getVariantAnnotations() {

@@ -7,7 +7,7 @@ import org.monarchinitiative.omop.analysis.Ompopulate;
 import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
 import org.monarchinitiative.omop.stage.Assembly;
 import org.monarchinitiative.omop.stage.OmopStageFileParser;
-import org.monarchinitiative.omop.stage.StagedVariant;
+import org.monarchinitiative.omop.stage.OmopStagedVariant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -73,15 +73,23 @@ public class Vcf2OmopCommand implements Callable<Integer>  {
     }
 
     @Override
-    public Integer call() {
+    public Integer call() throws IOException {
         logger.debug("Executing vcf2omop");
         File f = new File(omopStageFilePath);
         if (! f.isFile()) {
             throw new Vcf2OmopRuntimeException("Could not find OMOP stage file at " + f.getAbsolutePath());
         }
         OmopStageFileParser omopStageFileParser = new OmopStageFileParser(f);
-        List<StagedVariant> stagedVariantList = omopStageFileParser.getStagedVariantList();
+        List<OmopStagedVariant> stagedVariantList = omopStageFileParser.getStagedVariantList();
         Ompopulate ompopulate = new Ompopulate(getJannovarPath(), vcfPath, assembly.name(), stagedVariantList, showAll);
+        File vcfFile = new File(vcfPath);
+        if (!vcfFile.isFile()) {
+            throw new Vcf2OmopRuntimeException("Could not find VCF file at " + vcfFile.getAbsolutePath());
+        }
+        String basename = vcfFile.getName();
+        String outname = prefix + "-" + basename;
+        File outfile = new File(outname);
+        ompopulate.annotateVcf(outfile);
         List<OmopAnnotatedVariant> annotations = ompopulate.getVariantAnnotations();
         dumpToShell(annotations);
         writeToFile(annotations);

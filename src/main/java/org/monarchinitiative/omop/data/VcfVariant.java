@@ -2,6 +2,11 @@ package org.monarchinitiative.omop.data;
 
 import java.util.Objects;
 
+/**
+ * This class is used as a key to compare {@link org.monarchinitiative.omop.stage.OmopStagedVariant} objects
+ * with variants in a VCF file.
+ * @author Peter N Robinson
+ */
 public class VcfVariant {
 
     private final String chromosome;
