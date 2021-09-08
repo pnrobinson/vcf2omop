@@ -42,10 +42,49 @@ After setting up the app as above, all you need is a VCF file and a path to the 
 $ java -jar target/vcf2omop.jar vcf2omop --stage <path/to/stage_genomic.csv> --vcf <path/to/vcf>
 ```
 There are several options that can be seen with the -h flag.
+```bazaar
+$ java -jar target/vcf2omop.jar vcf2omop -h
+Usage: vcf2omop vcf2omop [-hV] [-a=<assembly>] [-d=<downloadDir>]
+                         [--database=<genomeDatabase>] [-j=<jannovarPath>]
+                         [-p=<prefix>] -s=<omopStageFilePath> --vcf=<vcfPath>
+extract OMOP-annotated vars from VCF
+  -a, --assembly=<assembly>  genome assembly: hg19, GRCh19, hg38, GRCh38,
+                               default null
+  -d, --data=<downloadDir>   location of download directory (default: data)
+      --database=<genomeDatabase>
+                             database: refseq, ensembl
+  -h, --help                 Show this help message and exit.
+  -p, --prefix=<prefix>      Outfile prefix
+  -s, --stage=<omopStageFilePath>
+                             path to OMOP stage file
+  -V, --version              Print version information and exit.
+      --vcf=<vcfPath>        path to VCF file
+```
 
+It is possible to combine the hg19 and hg38 (genome assembly) options with the
+refseq or ensembl options. The app does not check that your VCF file corresponds
+to the option you chose and will produce incorrect results if the options are incorrect.
 
+### Expected results
 
+If the input VCF file contains variants in the OMOP staging file, the app will
+add an annotation to the INFO field of the VCF file. For instance, 
+the INFO field of this variant
+```bazaar
+5	112177171	rs465899	G	A	4052.01	PASS	(...)
+```
+gets a new OMOP annotation 
+```bazaar
+(...);MQ=37;MQ0=0;MQRankSum=0.485;OMOP=36746894;(...)
+```
+The remaining data in the VCF file is transmitted as is.
 
+If the user chooses the ``--annot`` option, then the VCF file is additionally annotated
+with transcript level annotations for each variant. For instance, 
+
+```bazaar
+to do improve Jannovar annotations.
+```
 
 ## To generate synonyms
 This new feature generates a table of 'synoynms'.

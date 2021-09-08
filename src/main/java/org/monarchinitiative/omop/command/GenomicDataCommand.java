@@ -24,11 +24,6 @@ public abstract class GenomicDataCommand extends Command {
             description = "database: ${COMPLETION-CANDIDATES}")
     protected Vcf2OmopCommand.GenomeDatabase genomeDatabase = Vcf2OmopCommand.GenomeDatabase.ensembl;
 
-    @CommandLine.Option(names = {"-j", "--jannovar"},
-            scope = CommandLine.ScopeType.INHERIT,
-            description = "path to Jannovar transcript file")
-    protected String jannovarPath = null;
-
     @CommandLine.Option(names = {"-s", "--stage"},
             scope = CommandLine.ScopeType.INHERIT,
             description = "path to OMOP stage file", required = true)
