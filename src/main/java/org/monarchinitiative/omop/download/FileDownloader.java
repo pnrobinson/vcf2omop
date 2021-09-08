@@ -1,4 +1,4 @@
-package org.monarchinitiative.omop.io;
+package org.monarchinitiative.omop.download;
 
 import java.io.BufferedInputStream;
 import java.io.File;

@@ -10,7 +10,6 @@ import de.charite.compbio.jannovar.reference.GenomePosition;
 import de.charite.compbio.jannovar.reference.GenomeVariant;
 import de.charite.compbio.jannovar.reference.PositionType;
 import de.charite.compbio.jannovar.reference.Strand;
-import org.monarchinitiative.omop.analysis.OmopAnnotatedVariant;
 import org.monarchinitiative.omop.analysis.Ompopulate;
 import org.monarchinitiative.omop.data.OmopEntry;
 import org.monarchinitiative.omop.data.OmopMapParser;
@@ -77,7 +76,7 @@ public class SynonymsCommand implements Callable<Integer> {
 
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
         String outname = String.format("synonyms-%s-%s.tsv", this.prefix, this.assembly);
         initJannovar();
         OmopMapParser parser = new OmopMapParser(assembly);
@@ -130,7 +129,7 @@ public class SynonymsCommand implements Callable<Integer> {
                         fields.add(annot.getProteinChangeStr());
                         writer.write(String.join("\t", fields) + "\n");
                     } catch (Exception e) {
-                        System.err.printf("[ERROR] Could not annotate entry %s!\n", entry.toString());
+                        System.err.printf("[ERROR] Could not annotate entry %s!\n", entry);
                     }
                 }
             }

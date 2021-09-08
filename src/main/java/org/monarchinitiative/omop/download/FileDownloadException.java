@@ -1,4 +1,4 @@
-package org.monarchinitiative.omop.io;
+package org.monarchinitiative.omop.download;
 
 public class FileDownloadException extends Exception {
     private static final long serialVersionUID = 1L;

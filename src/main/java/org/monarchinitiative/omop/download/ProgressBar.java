@@ -1,4 +1,4 @@
-package org.monarchinitiative.omop.io;
+package org.monarchinitiative.omop.download;
 
 
 /**
@@ -62,7 +62,7 @@ public final class ProgressBar {
         }
 
         bar.append("]   " + percent + "%     ");
-        System.err.print("\r" + bar.toString());
+        System.err.print("\r" + bar);
         if (pos == max)
             System.err.println();
     }
