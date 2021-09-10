@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Generate table with all transcript-annotations linked to a given chromosomal change in the OMOP table
@@ -62,11 +63,18 @@ public class SynonymsCommand extends GenomicDataCommand implements Callable<Inte
         try {
             this.jannovarData = new JannovarDataSerializer(jannovarPath).load();
             this.refDict = jannovarData.getRefDict();
+            this.chromosomeMap = jannovarData.getChromosomes();
         } catch (SerializationException se) {
             throw new Vcf2OmopRuntimeException(se.getMessage());
         }
-        //OmopMapParser parser = new OmopMapParser(assembly);
         List<OmopStagedVariant> stagedVariantList = stagedVariantList(omopStageFilePath);
+        int n_total_vars = stagedVariantList.size();
+        // filter for desired assembly
+        stagedVariantList = stagedVariantList.stream()
+                .filter(osv -> osv.getAssembly().equals(this.assembly))
+                .collect(Collectors.toList());
+        logger.info("We filtered {} total OMOP staged variants to obtain {} variants specific for assembly {}",
+                n_total_vars, stagedVariantList.size(), assembly.name());
 
         File f;
 
