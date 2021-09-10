@@ -1,20 +1,14 @@
 package org.monarchinitiative.omop.command;
 
 
-import org.monarchinitiative.omop.analysis.OmopAnnotatedTranscript;
-import org.monarchinitiative.omop.analysis.OmopAnnotatedVariant;
 import org.monarchinitiative.omop.analysis.Omopulator;
 import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
-import org.monarchinitiative.omop.stage.Assembly;
-import org.monarchinitiative.omop.stage.OmopStageFileParser;
 import org.monarchinitiative.omop.stage.OmopStagedVariant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;

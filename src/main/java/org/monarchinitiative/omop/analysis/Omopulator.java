@@ -1,8 +1,6 @@
 package org.monarchinitiative.omop.analysis;
 
 import com.google.common.collect.ImmutableMap;
-import de.charite.compbio.jannovar.annotation.VariantAnnotator;
-import de.charite.compbio.jannovar.annotation.builders.AnnotationBuilderOptions;
 import de.charite.compbio.jannovar.data.*;
 import de.charite.compbio.jannovar.htsjdk.VariantContextAnnotator;
 import htsjdk.tribble.TribbleException;
@@ -15,7 +13,6 @@ import htsjdk.variant.variantcontext.writer.VariantContextWriterBuilder;
 import htsjdk.variant.vcf.*;
 
 import org.monarchinitiative.omop.data.VcfVariant;
-import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
 import org.monarchinitiative.omop.stage.OmopStagedVariant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,13 +71,7 @@ public class Omopulator {
         if (!f.exists()) {
             throw new RuntimeException("Could not find VCF file at " + vcfPath);
         }
-        /**
-         * Reference dictionary that is part of {@link #jannovarData}.
-         */
         ReferenceDictionary refDict = jannovarData.getRefDict();
-        /**
-         * Map of Chromosomes, used in the annotation.
-         */
         ImmutableMap<Integer, Chromosome> chromosomeMap = jannovarData.getChromosomes();
         this.vcfFilePath = f.getAbsolutePath();
         this.variantAnnotations = new ArrayList<>();

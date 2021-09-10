@@ -3,6 +3,8 @@ package org.monarchinitiative.omop.stage;
 import org.monarchinitiative.omop.data.VcfVariant;
 import org.monarchinitiative.omop.except.Vcf2OmopRuntimeException;
 
+import java.util.Objects;
+
 public class OmopStagedVariant {
 
     private final static int X_CHROMOSOME = 23;
@@ -120,5 +122,29 @@ public class OmopStagedVariant {
             }
         }
         throw new Vcf2OmopRuntimeException("Invalid chromosome: \"" + field + "\"");
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(omopId, chrom, pos, ref, alt, assembly);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (! (obj instanceof  OmopStagedVariant)) return false;
+        OmopStagedVariant that = (OmopStagedVariant) obj;
+        return this.omopId == that.omopId &&
+                this.chrom == that.chrom &&
+                this.pos == that.pos &&
+                this.ref.equals(that.ref) &&
+                this.alt.equals(that.alt) &&
+                this.assembly.equals(that.assembly);
+    }
+
+
+    @Override
+    public String toString() {
+        return String.format("OmopStagedVariant: %d: %s:%d%s>%s (%s)",
+                omopId, chromToString(), pos, ref, alt, assembly);
     }
 }
