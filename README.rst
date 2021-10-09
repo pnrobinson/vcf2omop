@@ -162,8 +162,23 @@ The remaining data in the VCF file is transmitted as is.
 If the user chooses the ``--annot`` option, then the VCF file is additionally annotated
 with transcript level annotations for each variant. For instance, 
 
+.. code-block:: bash
 
-  to do improve Jannovar annotations.
+  $ java -jar target/vcf2omop.jar omop \
+      --stage stage_genomic.csv \
+      --vcf src/main/resources/sample-hg19.vcf \
+      --annot
+
+This command will add Jannovar annotations such as the following to the INFO fields of variants: ::
+
+    JANNOVAR=ENST00000507810.1(EPB41L4A):n.953-3219A>C (non_coding_transcript_intron_variant)
+    JANNOVAR=intergenic_variant
+    JANNOVAR=ENST00000257430.4(APC):c.136-230C>A (p.(=);coding_transcript_intron_variant)
+    JANNOVAR=ENST00000231136.1(PCDHB6):c.1908C>G (p.(H636Q);missense_variant)
+    JANNOVAR=ENST00000434307.2(SPAG11A):c.310T>G (p.(*104Eext*20);stop_lost)
+    JANNOVAR=ENST00000230354.6(TBP):c.213_215dup (p.(Q95dup);disruptive_inframe_insertion)
+
+These annotations will be added to all variants (not just those with OMOP annotations).
 
 
 Generate synonyms
