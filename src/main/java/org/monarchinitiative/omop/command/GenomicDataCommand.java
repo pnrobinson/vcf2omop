@@ -21,9 +21,10 @@ public abstract class GenomicDataCommand extends Command {
     protected Assembly assembly;
 
     @CommandLine.Option(names = "--database",
+            defaultValue = "ensembl",
             scope = CommandLine.ScopeType.INHERIT,
-            description = "database: ${COMPLETION-CANDIDATES}")
-    protected Vcf2OmopCommand.GenomeDatabase genomeDatabase = Vcf2OmopCommand.GenomeDatabase.ensembl;
+            description = "database: ${COMPLETION-CANDIDATES}, default ${DEFAULT-VALUE}")
+    protected Vcf2OmopCommand.GenomeDatabase genomeDatabase;
 
     @CommandLine.Option(names = {"-s", "--stage"},
             scope = CommandLine.ScopeType.INHERIT,
