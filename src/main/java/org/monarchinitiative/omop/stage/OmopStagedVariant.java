@@ -93,7 +93,7 @@ public class OmopStagedVariant {
             case "37":
             case "hg19":
             case "hg37":
-            case "CRCh37":
+            case "GRCh37":
                 return Assembly.GRCh19;
             case "38":
             case "hg38":
