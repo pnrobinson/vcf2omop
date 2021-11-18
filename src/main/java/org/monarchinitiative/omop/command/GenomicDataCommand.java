@@ -15,14 +15,16 @@ import java.util.List;
  */
 public abstract class GenomicDataCommand extends Command {
     @CommandLine.Option(names = {"-a", "--assembly"},
+            defaultValue = "hg19",
             scope = CommandLine.ScopeType.INHERIT,
-            description = "genome assembly: ${COMPLETION-CANDIDATES}, default ${DEFAULT_VALUE}")
-    protected Assembly assembly = Assembly.GRCh19;
+            description = "genome assembly: ${COMPLETION-CANDIDATES}, default ${DEFAULT-VALUE}")
+    protected Assembly assembly;
 
     @CommandLine.Option(names = "--database",
+            defaultValue = "ensembl",
             scope = CommandLine.ScopeType.INHERIT,
-            description = "database: ${COMPLETION-CANDIDATES}")
-    protected Vcf2OmopCommand.GenomeDatabase genomeDatabase = Vcf2OmopCommand.GenomeDatabase.ensembl;
+            description = "database: ${COMPLETION-CANDIDATES}, default ${DEFAULT-VALUE}")
+    protected Vcf2OmopCommand.GenomeDatabase genomeDatabase;
 
     @CommandLine.Option(names = {"-s", "--stage"},
             scope = CommandLine.ScopeType.INHERIT,
@@ -53,6 +55,7 @@ public abstract class GenomicDataCommand extends Command {
                 } else {
                     throw new Vcf2OmopRuntimeException("Could not identify databasae " + genomeDatabase);
                 }
+                break;
             default:
                 throw new Vcf2OmopRuntimeException("Could not identify assembly " + assembly.toString());
         }
